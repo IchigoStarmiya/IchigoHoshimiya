@@ -47,6 +47,7 @@ builder.Services.AddHttpClient<RssSearcherAndPosterService>();
 builder.Services.AddHostedService<AnimeThemesDbUpdateService>();
 builder.Services.AddHostedService<SeasonalCalendarDbUpdateService>();
 builder.Services.AddHostedService<RssSearcherAndPosterService>();
+builder.Services.AddHostedService<TicketBackupService>();
 
 builder.Services.AddSingleton<GrassToucherReleaserService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
@@ -65,6 +66,7 @@ builder.Services.AddDbContext<IchigoContext>(options =>
 
 builder.Services.AddTransient<IClient, RestClientAdapter>();
 builder.Services.AddSingleton<IPingService, PingService>();
+builder.Services.AddHostedService<TicketBackupService>();
 builder.Services.AddSingleton<ITwitterReplacementService, TwitterReplacementService>();
 builder.Services.AddScoped<IAnimethemeService, AnimethemeService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
