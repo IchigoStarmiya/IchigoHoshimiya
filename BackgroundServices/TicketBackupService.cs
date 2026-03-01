@@ -17,8 +17,8 @@ public class TicketBackupService(
 {
     private readonly RateLimiter _rateLimiter = new();
 
-    // Run frequently to minimize data loss before deletion
-    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(5);
+    // Run every 30 minutes
+    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(30);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
