@@ -8,7 +8,7 @@ public class VodTextCommandModule : CommandModule<CommandContext>
 {
     [Command("vod")]
     [UsedImplicitly]
-    public string Vod()
+    public static string Vod()
     {
         return "https://docs.google.com/forms/d/e/1FAIpQLSdCAYzw2YkI8l4isLY0k4a28rln3OOMm95KD7FOuugheoo06g/viewform?usp=dialog";
     }
