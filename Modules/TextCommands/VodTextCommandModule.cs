@@ -10,6 +10,6 @@ public class VodTextCommandModule : CommandModule<CommandContext>
     [UsedImplicitly]
     public static string Vod()
     {
-        return "https://docs.google.com/forms/d/e/1FAIpQLSdCAYzw2YkI8l4isLY0k4a28rln3OOMm95KD7FOuugheoo06g/viewform?usp=dialog";
+        return "https://docs.google.com/forms/d/e/1FAIpQLSclZMEJl0Qr_iU8sURQz5djqynf1jnhMPeYZ4Y8P1cS1AvKEA/viewform";
     }
 }
