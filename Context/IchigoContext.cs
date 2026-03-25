@@ -28,6 +28,10 @@ public class IchigoContext : DbContext
     
     public virtual DbSet<TicketMessage> TicketMessages { get; set; }
 
+    public virtual DbSet<ScrimSignup> ScrimSignups { get; set; }
+
+    public virtual DbSet<ScrimSignupEntry> ScrimSignupEntries { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
           base.OnModelCreating(modelBuilder);
@@ -77,6 +81,45 @@ public class IchigoContext : DbContext
                                   new List<string>()
                        )
                       .HasColumnType("TEXT"); // Use TEXT for SQLite, NVARCHAR(MAX) for SQL Server
+          });
+
+          modelBuilder.Entity<ScrimSignup>(entity =>
+          {
+                entity.HasKey(e => e.Id);
+
+                entity.HasIndex(e => e.MessageId)
+                      .IsUnique();
+
+                entity.HasIndex(e => e.CreatedById);
+                entity.HasIndex(e => e.CreatedAtUtc);
+
+                entity.Property(e => e.Title)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.HasMany(e => e.Entries)
+                      .WithOne(e => e.ScrimSignup)
+                      .HasForeignKey(e => e.ScrimSignupId)
+                      .OnDelete(DeleteBehavior.Cascade);
+          });
+
+          modelBuilder.Entity<ScrimSignupEntry>(entity =>
+          {
+                entity.HasKey(e => e.Id);
+
+                entity.HasIndex(e => new { e.ScrimSignupId, e.UserId })
+                      .IsUnique();
+
+                entity.HasIndex(e => e.UserId);
+
+                entity.Property(e => e.Role)
+                      .HasConversion<int>();
+
+                entity.Property(e => e.Weapon)
+                      .HasConversion<int>();
+
+                entity.Property(e => e.AvailableDays)
+                      .HasConversion<int>();
           });
     }
 }

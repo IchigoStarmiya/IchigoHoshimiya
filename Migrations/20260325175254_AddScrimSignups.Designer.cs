@@ -3,6 +3,7 @@ using System;
 using IchigoHoshimiya.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IchigoHoshimiya.Migrations
 {
     [DbContext(typeof(IchigoContext))]
-    partial class IchigoContextModelSnapshot : ModelSnapshot
+    [Migration("20260325175254_AddScrimSignups")]
+    partial class AddScrimSignups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,10 +209,6 @@ namespace IchigoHoshimiya.Migrations
                     b.Property<ulong>("UserId")
                         .HasColumnType("bigint unsigned")
                         .HasColumnName("user_id");
-
-                    b.Property<int>("Weapon")
-                        .HasColumnType("int")
-                        .HasColumnName("weapon");
 
                     b.HasKey("Id");
 

@@ -73,6 +73,8 @@ builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IRssService, RssService>();
 builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
+builder.Services.AddScoped<IScrimService, ScrimService>();
+builder.Services.AddHostedService<ScrimAutoCloseService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {
@@ -96,6 +98,7 @@ builder.Services
         })
        .AddApplicationCommands()
        .AddComponentInteractions<ButtonInteraction, ButtonInteractionContext>()
+       .AddComponentInteractions<StringMenuInteraction, StringMenuInteractionContext>()
        .AddGatewayHandlers(typeof(Program).Assembly);
 
 var host = builder.Build();

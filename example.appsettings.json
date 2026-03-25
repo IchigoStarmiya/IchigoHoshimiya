@@ -1,7 +1,8 @@
 {
   "Discord": {
     "Token": "YOUR TOKEN HERE",
-    "Prefix": ";"
+    "Prefix": ";",
+    "OwnerUserId": 0
   },
   "ConnectionStrings": {
     "DefaultConnection": "Server=localhost;Port=3306;Database=animethemes;Uid=root;Pwd=<your-password>;"
