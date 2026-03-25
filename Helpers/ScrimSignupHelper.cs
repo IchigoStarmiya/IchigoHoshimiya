@@ -35,7 +35,7 @@ public static class ScrimSignupHelper
         new(ScrimWeapon.NamelessSword, ScrimRole.Dps, "Nameless x2", "Namelessx2", "DPS"),
         new(ScrimWeapon.TwinbladeRopeDart, ScrimRole.Dps, "Twinblade/Ropedart", "TB/RD", "DPS"),
         new(ScrimWeapon.MoSb, ScrimRole.Tank, "Moblade/Stormbreaker", "Mo/SB", "Tank"),
-        new(ScrimWeapon.MoHybrid, ScrimRole.Dps, "Moblade/Hybrid", "MoHybrid", "Tank"),
+        new(ScrimWeapon.MoHybrid, ScrimRole.Tank, "Moblade/Hybrid", "MoHybrid", "Tank"),
         new(ScrimWeapon.Unspecified, ScrimRole.Flex, "Other weapon", "Other", "Other")
     ];
 
