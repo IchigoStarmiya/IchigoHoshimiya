@@ -183,7 +183,7 @@ public static class ScrimSignupHelper
 
     public static bool IsValidWeapon(int value)
     {
-        return Enum.IsDefined(typeof(ScrimWeapon), value) && value != (int)ScrimWeapon.Unspecified;
+        return Enum.IsDefined(typeof(ScrimWeapon), value);
     }
 
     public static bool IsValidDaySelection(int value)
