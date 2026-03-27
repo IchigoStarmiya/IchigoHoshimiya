@@ -36,7 +36,7 @@ public static class ScrimSignupHelper
         new(ScrimWeapon.TwinbladeRopeDart, ScrimRole.Dps, "Twinblade/Ropedart", "TB/RD", "DPS"),
         new(ScrimWeapon.MoSb, ScrimRole.Tank, "Moblade/Stormbreaker", "Mo/SB", "Tank"),
         new(ScrimWeapon.MoHybrid, ScrimRole.Tank, "Moblade/Hybrid", "MoHybrid", "Tank"),
-        new(ScrimWeapon.Unspecified, ScrimRole.Flex, "Other weapon", "Other", "Other")
+        new(ScrimWeapon.Unspecified, ScrimRole.Dps, "Other weapon", "Other", "DPS")
     ];
 
     public static string BuildPublicSignupButtonId(long signupId) => $"{PublicSignupButtonId}:{signupId}";
@@ -124,9 +124,7 @@ public static class ScrimSignupHelper
 
     public static ScrimRole ResolveRole(ScrimSignupEntry entry)
     {
-        return entry.Weapon == ScrimWeapon.Unspecified
-            ? entry.Role
-            : GetRoleForWeapon(entry.Weapon);
+        return GetRoleForWeapon(entry.Weapon);
     }
 
     public static string FormatRole(ScrimRole role)
