@@ -73,9 +73,9 @@ public class ThreadSlashCommandModule(RestClient restClient, IConfiguration conf
             return;
         }
 
-        // 3. Add members in batches
+        // 3. Add members in batches, silently skip anyone who can't be added (no channel access etc.)
         var added = 0;
-        var failed = new List<ulong>();
+        var skippedNoAccess = 0;
 
         for (var i = 0; i < toAdd.Count; i += BatchSize)
         {
@@ -85,33 +85,17 @@ public class ThreadSlashCommandModule(RestClient restClient, IConfiguration conf
             {
                 try
                 {
-                    // API: AddGuildThreadUserAsync(threadId, userId)
                     await restClient.AddGuildThreadUserAsync(channelId, userId);
                     added++;
                 }
                 catch
                 {
-                    failed.Add(userId);
+                    skippedNoAccess++;
                 }
             }
 
             if (i + BatchSize < toAdd.Count)
                 await Task.Delay(BatchDelay);
-        }
-
-        // 4. If any adds failed, ping them so they at least get a notification
-        if (failed.Count > 0)
-        {
-            var chunks = ChunkMentions(failed, 1800);
-            foreach (var chunk in chunks)
-            {
-                await restClient.SendMessageAsync(channelId, new MessageProperties
-                {
-                    Content = $"👋 {chunk}",
-                    AllowedMentions = new AllowedMentionsProperties()
-                        .WithAllowedUsers(failed)
-                });
-            }
         }
 
         var lines = new List<string>
@@ -122,8 +106,8 @@ public class ThreadSlashCommandModule(RestClient restClient, IConfiguration conf
         if (alreadyInThread.Count > 0)
             lines.Add($"↩️ {roleMembers.Count - toAdd.Count} member(s) were already here and skipped.");
 
-        if (failed.Count > 0)
-            lines.Add($"⚠️ {failed.Count} member(s) could not be added via API — they were pinged instead.");
+        if (skippedNoAccess > 0)
+            lines.Add($"⚠️ {skippedNoAccess} member(s) could not be added (no channel access).");
 
         await Context.Interaction.ModifyResponseAsync(m =>
             m.WithContent(string.Join('\n', lines)));
@@ -158,30 +142,6 @@ public class ThreadSlashCommandModule(RestClient restClient, IConfiguration conf
         return result;
     }
 
-    private static List<string> ChunkMentions(IEnumerable<ulong> userIds, int maxLength)
-    {
-        var chunks = new List<string>();
-        var current = new System.Text.StringBuilder();
-
-        foreach (var id in userIds)
-        {
-            var mention = $"<@{id}>";
-            if (current.Length > 0 && current.Length + 1 + mention.Length > maxLength)
-            {
-                chunks.Add(current.ToString());
-                current.Clear();
-            }
-
-            if (current.Length > 0)
-                current.Append(' ');
-            current.Append(mention);
-        }
-
-        if (current.Length > 0)
-            chunks.Add(current.ToString());
-
-        return chunks;
-    }
 
     private async Task<bool> EnsureOwnerAsync()
     {
