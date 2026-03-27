@@ -64,6 +64,7 @@ public class ScrimService(IchigoContext dbContext, RestClient restClient) : IScr
     public async Task<ScrimSignupEntry> SaveSignupEntryAsync(
         long signupId,
         ulong userId,
+        string username,
         ScrimWeapon weapon,
         ScrimAvailableDays availableDays,
         CancellationToken cancellationToken = default)
@@ -91,6 +92,7 @@ public class ScrimService(IchigoContext dbContext, RestClient restClient) : IScr
             {
                 ScrimSignupId = signupId,
                 UserId = userId,
+                Username = username,
                 Role = ScrimSignupHelper.GetRoleForWeapon(weapon),
                 Weapon = weapon,
                 AvailableDays = availableDays,
@@ -101,6 +103,7 @@ public class ScrimService(IchigoContext dbContext, RestClient restClient) : IScr
         }
         else
         {
+            entry.Username = username;
             entry.Role = ScrimSignupHelper.GetRoleForWeapon(weapon);
             entry.Weapon = weapon;
             entry.AvailableDays = availableDays;
@@ -272,7 +275,11 @@ public class ScrimService(IchigoContext dbContext, RestClient restClient) : IScr
         }
 
         var lines = entries
-            .Select(entry => $"• <@{entry.UserId}> — {ScrimSignupHelper.FormatWeaponShort(entry.Weapon)} — {ScrimSignupHelper.FormatDaysShort(entry.AvailableDays)}")
+            .Select(entry =>
+            {
+                var name = string.IsNullOrWhiteSpace(entry.Username) ? entry.UserId.ToString() : entry.Username;
+                return $"• {name} — {ScrimSignupHelper.FormatWeaponShort(entry.Weapon)} — {ScrimSignupHelper.FormatDaysShort(entry.AvailableDays)}";
+            })
             .ToList();
 
         var chunks = ChunkLines(lines, 1000);

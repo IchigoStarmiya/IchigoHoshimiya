@@ -83,6 +83,10 @@ public class ScrimSignupEntry
     [Column("user_id")]
     public ulong UserId { get; set; }
 
+    [Column("username")]
+    [MaxLength(100)]
+    public string Username { get; set; } = string.Empty;
+
     [Column("role")]
     public ScrimRole Role { get; set; }
 

@@ -16,6 +16,7 @@ public interface IScrimService
     Task<ScrimSignupEntry> SaveSignupEntryAsync(
         long signupId,
         ulong userId,
+        string username,
         ScrimWeapon weapon,
         ScrimAvailableDays availableDays,
         CancellationToken cancellationToken = default);

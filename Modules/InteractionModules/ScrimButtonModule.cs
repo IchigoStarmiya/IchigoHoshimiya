@@ -145,7 +145,8 @@ public class ScrimButtonModule(IScrimService scrimService) : ComponentInteractio
 
         try
         {
-            await scrimService.SaveSignupEntryAsync(signupId, Context.User.Id, weapon, selectedDays);
+            var username = Context.User.GlobalName ?? Context.User.Username;
+            await scrimService.SaveSignupEntryAsync(signupId, Context.User.Id, username, weapon, selectedDays);
             await scrimService.RefreshSignupMessageAsync(signupId);
 
             await Context.Interaction.ModifyFollowupMessageAsync(

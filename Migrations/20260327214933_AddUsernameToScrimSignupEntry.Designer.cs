@@ -3,6 +3,7 @@ using System;
 using IchigoHoshimiya.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IchigoHoshimiya.Migrations
 {
     [DbContext(typeof(IchigoContext))]
-    partial class IchigoContextModelSnapshot : ModelSnapshot
+    [Migration("20260327214933_AddUsernameToScrimSignupEntry")]
+    partial class AddUsernameToScrimSignupEntry
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
