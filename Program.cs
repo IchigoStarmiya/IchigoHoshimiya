@@ -112,6 +112,40 @@ EmbedHelper.Initialize(colours!);
 // NetCord: Add commands from modules
 host.AddModules(typeof(Program).Assembly);
 
+// TODO: REMOVE THIS BLOCK — one-time refresh to push the "Not Available This Week" button to existing open scrim signups.
+{
+    await using var scope = host.Services.CreateAsyncScope();
+    var scrimService = scope.ServiceProvider.GetRequiredService<IScrimService>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var openSignups = await scrimService.GetExpiredOpenSignupsAsync(CancellationToken.None);
+        // GetExpiredOpenSignupsAsync only returns signups past Friday — grab ALL open ones via the DB directly.
+        // Use RefreshSignupMessageAsync which rebuilds embeds + components (including the new button).
+        using var dbScope = host.Services.CreateScope();
+        var db = dbScope.ServiceProvider.GetRequiredService<IchigoContext>();
+        var allOpen = await db.ScrimSignups
+            .Where(s => s.IsOpen && s.MessageId != null)
+            .ToListAsync();
+        foreach (var signup in allOpen)
+        {
+            try
+            {
+                await scrimService.RefreshSignupMessageAsync(signup.Id, CancellationToken.None);
+                logger.LogInformation("Refreshed scrim signup {Id} (message {MessageId})", signup.Id, signup.MessageId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to refresh scrim signup {Id}", signup.Id);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "One-time scrim refresh failed");
+    }
+}
+
 await host.RunAsync();
 
 file sealed class InlineResultHandler : ICommandResultHandler<CommandContext>

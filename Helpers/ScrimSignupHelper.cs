@@ -19,6 +19,7 @@ public static class ScrimSignupHelper
     public const string DayToggleButtonId = "scrim-day";
     public const string SaveButtonId = "scrim-save";
     public const string BackButtonId = "scrim-back";
+    public const string NotAvailableButtonId = "scrim-notavail";
 
     public static readonly IReadOnlyList<(ScrimAvailableDays Flag, string Label, string ShortLabel)> Weekdays =
     [
@@ -50,6 +51,9 @@ public static class ScrimSignupHelper
 
     public static string BuildSaveButtonId(long signupId, ScrimWeapon weapon, ScrimAvailableDays selectedDays)
         => $"{SaveButtonId}:{signupId}:{(int)weapon}:{(int)selectedDays}";
+
+    public static string BuildNotAvailableButtonId(long signupId, ScrimWeapon weapon)
+        => $"{NotAvailableButtonId}:{signupId}:{(int)weapon}";
 
     public static string BuildBackButtonId(long signupId) => $"{BackButtonId}:{signupId}";
 
@@ -102,6 +106,7 @@ public static class ScrimSignupHelper
             new ActionRowProperties(
             [
                 new ButtonProperties(BuildSaveButtonId(signupId, weapon, selectedDays), "Save Signup", ButtonStyle.Primary),
+                new ButtonProperties(BuildNotAvailableButtonId(signupId, weapon), "Not Available This Week", ButtonStyle.Danger),
                 new ButtonProperties(BuildBackButtonId(signupId), "Back", ButtonStyle.Secondary)
             ])
         ];
@@ -145,7 +150,7 @@ public static class ScrimSignupHelper
             .Select(day => day.Label)
             .ToList();
 
-        return labels.Count == 0 ? "No days selected" : string.Join(", ", labels);
+        return labels.Count == 0 ? "Not available this week" : string.Join(", ", labels);
     }
 
     public static string FormatDaysShort(ScrimAvailableDays days)
@@ -155,7 +160,7 @@ public static class ScrimSignupHelper
             .Select(day => day.ShortLabel)
             .ToList();
 
-        return labels.Count == 0 ? "None" : string.Join('/', labels);
+        return labels.Count == 0 ? "N/A" : string.Join('/', labels);
     }
 
     public static string FormatSingleDayShort(ScrimAvailableDays day)

@@ -169,10 +169,50 @@ public class ScrimButtonModule(IScrimService scrimService) : ComponentInteractio
         }
     }
 
+    [ComponentInteraction(ScrimSignupHelper.NotAvailableButtonId)]
+    [UsedImplicitly]
+    public async Task MarkNotAvailable(long signupId, int weaponValue)
+    {
+        if (!ScrimSignupHelper.IsValidWeapon(weaponValue))
+        {
+            await RespondEphemeralAsync("That signup payload is invalid.");
+            return;
+        }
+
+        var weapon = (ScrimWeapon)weaponValue;
+
+        // DB write + message refresh can exceed 3 s — defer
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredModifyMessage);
+
+        try
+        {
+            var username = Context.User.GlobalName ?? Context.User.Username;
+            await scrimService.SaveSignupEntryAsync(signupId, Context.User.Id, username, weapon, ScrimAvailableDays.None);
+            await scrimService.RefreshSignupMessageAsync(signupId);
+
+            await Context.Interaction.ModifyFollowupMessageAsync(
+                Context.Message.Id,
+                message =>
+                {
+                    message.Content = $"✅ Saved you as **not available this week** (weapon: **{ScrimSignupHelper.FormatWeapon(weapon)}**).";
+                    message.Components = ScrimSignupHelper.BuildWeaponSelectionComponents(signupId, weapon);
+                });
+        }
+        catch (InvalidOperationException ex)
+        {
+            await Context.Interaction.ModifyFollowupMessageAsync(
+                Context.Message.Id,
+                message =>
+                {
+                    message.Content = ex.Message;
+                    message.Components = [];
+                });
+        }
+    }
+
     [ComponentInteraction(ScrimSignupHelper.BackButtonId)]
     [UsedImplicitly]
-    public async Task BackToWeaponSelection(long signupId)
-    {
+    public async Task BackToWeaponSelection(long signupId)    {
         var signup = await scrimService.GetSignupAsync(signupId);
 
         if (signup is null)

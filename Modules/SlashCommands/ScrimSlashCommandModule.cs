@@ -11,7 +11,7 @@ using NetCord.Services.ApplicationCommands;
 namespace IchigoHoshimiya.Modules.SlashCommands;
 
 [UsedImplicitly]
-public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration configuration)
+public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration configuration, RestClient restClient)
     : ApplicationCommandModule<ApplicationCommandContext>
 {
     [SlashCommand("scrim", "Create a Where Winds Meet GvG scrim signup")]
@@ -72,6 +72,122 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
             message.Content = $"Scrim stats for message `{report.MessageId}`";
             message.Embeds = embeds;
         });
+    }
+
+    [SlashCommand("pingunsignedscrim", "Ping members of a role who haven't signed up for a scrim")]
+    [UsedImplicitly]
+    public async Task PingUnsignedScrim(
+        [SlashCommandParameter(Name = "messageid", Description = "The Discord message ID of the scrim signup post")]
+        string messageId,
+        [SlashCommandParameter(Name = "roleid", Description = "The Discord role ID whose members should be pinged if unsigned")]
+        string roleId)
+    {
+        if (!await EnsureOwnerAsync())
+        {
+            return;
+        }
+
+        if (!ulong.TryParse(messageId, out var parsedMessageId))
+        {
+            await RespondEphemeralAsync("That is not a valid Discord message ID.");
+            return;
+        }
+
+        if (!ulong.TryParse(roleId, out var parsedRoleId))
+        {
+            await RespondEphemeralAsync("That is not a valid Discord role ID.");
+            return;
+        }
+
+        var guildId = Context.Interaction.GuildId;
+        if (guildId is null)
+        {
+            await RespondEphemeralAsync("This command must be used inside a server.");
+            return;
+        }
+
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
+
+        var signup = await scrimService.GetSignupByMessageIdAsync(parsedMessageId);
+        if (signup is null)
+        {
+            await Context.Interaction.ModifyResponseAsync(m =>
+                m.WithContent("That message is not a tracked scrim signup message."));
+            return;
+        }
+
+        // Collect signed-up user IDs
+        var signedUpIds = signup.Entries.Select(e => e.UserId).ToHashSet();
+
+        // Fetch all guild members who have the target role
+        var roleMembers = new List<ulong>();
+        await foreach (var member in restClient.GetGuildUsersAsync(guildId.Value))
+        {
+            if (member.RoleIds.Contains(parsedRoleId))
+                roleMembers.Add(member.Id);
+        }
+
+        if (roleMembers.Count == 0)
+        {
+            await Context.Interaction.ModifyResponseAsync(m =>
+                m.WithContent($"No members found with role `{parsedRoleId}`."));
+            return;
+        }
+
+        var unsigned = roleMembers.Where(id => !signedUpIds.Contains(id)).ToList();
+
+        if (unsigned.Count == 0)
+        {
+            await Context.Interaction.ModifyResponseAsync(m =>
+                m.WithContent("✅ Everyone from that role has already signed up!"));
+            return;
+        }
+
+        // Build ping message — Discord message limit is 2000 chars, chunk if needed
+        var pings = unsigned.Select(id => $"<@{id}>").ToList();
+        var reminder = "Please sign up for the scrim!";
+
+        var chunks = new List<string>();
+        var current = new System.Text.StringBuilder();
+        foreach (var ping in pings)
+        {
+            if (current.Length + ping.Length + 1 > 1900)
+            {
+                chunks.Add(current.ToString());
+                current.Clear();
+            }
+            if (current.Length > 0) current.Append(' ');
+            current.Append(ping);
+        }
+        if (current.Length > 0) chunks.Add(current.ToString());
+
+        // Send the first chunk as the original deferred response followup, rest as followups
+        var channelId = Context.Channel.Id;
+        await restClient.SendMessageAsync(channelId, new MessageProperties
+        {
+            Content = $"{chunks[0]}\n{reminder}"
+        });
+
+        for (var i = 1; i < chunks.Count; i++)
+        {
+            await restClient.SendMessageAsync(channelId, new MessageProperties
+            {
+                Content = chunks[i]
+            });
+        }
+
+        await Context.Interaction.ModifyResponseAsync(m =>
+            m.WithContent($"✅ Pinged {unsigned.Count} unsigned member(s) from that role."));
+    }
+
+    private Task RespondEphemeralAsync(string content)
+    {
+        return Context.Interaction.SendResponseAsync(
+            InteractionCallback.Message(new InteractionMessageProperties
+            {
+                Content = content,
+                Flags = MessageFlags.Ephemeral
+            }));
     }
 
     private async Task<bool> EnsureOwnerAsync()
@@ -176,34 +292,6 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         };
     }
 
-    private static List<List<string>> ChunkLines(IReadOnlyList<string> lines, int maxLength)
-    {
-        var chunks = new List<List<string>>();
-        var currentChunk = new List<string>();
-        var currentLength = 0;
-
-        foreach (var line in lines)
-        {
-            var projectedLength = currentLength == 0 ? line.Length : currentLength + 1 + line.Length;
-
-            if (currentChunk.Count > 0 && projectedLength > maxLength)
-            {
-                chunks.Add(currentChunk);
-                currentChunk = new List<string>();
-                currentLength = 0;
-            }
-
-            currentChunk.Add(line);
-            currentLength = currentLength == 0 ? line.Length : currentLength + 1 + line.Length;
-        }
-
-        if (currentChunk.Count > 0)
-        {
-            chunks.Add(currentChunk);
-        }
-
-        return chunks;
-    }
 
     private static List<List<EmbedFieldProperties>> ChunkFields(IReadOnlyList<EmbedFieldProperties> fields, int maxFieldsPerEmbed)
     {
