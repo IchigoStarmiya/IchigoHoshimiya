@@ -1,4 +1,5 @@
-﻿using IchigoHoshimiya.Adapters;
+﻿using IchigoHoshimiya;
+using IchigoHoshimiya.Adapters;
 using IchigoHoshimiya.BackgroundServices;
 using IchigoHoshimiya.Context;
 using IchigoHoshimiya.Helpers;
@@ -40,6 +41,9 @@ builder.Logging.AddSentry(options =>
 builder.Services.Configure<AnimeThemesUpdaterSettings>(
     builder.Configuration.GetSection("AnimeThemesUpdater"));
 
+builder.Services.Configure<VoiceTimerSettings>(
+    builder.Configuration.GetSection("VoiceTimer"));
+
 builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
 builder.Services.AddHttpClient<SeasonalCalendarDbUpdateService>();
 builder.Services.AddHttpClient<RssSearcherAndPosterService>();
@@ -75,6 +79,7 @@ builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddScoped<IScrimService, ScrimService>();
 builder.Services.AddHostedService<ScrimAutoCloseService>();
+builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {

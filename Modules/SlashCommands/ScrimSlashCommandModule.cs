@@ -18,11 +18,6 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
     [UsedImplicitly]
     public async Task CreateScrimSignup()
     {
-        if (!await EnsureOwnerAsync())
-        {
-            return;
-        }
-
         await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
 
         var signup = await scrimService.CreateSignupAsync(Context.Channel.Id, Context.User.Id);
@@ -37,10 +32,6 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         [SlashCommandParameter(Name = "messageid", Description = "The Discord message ID of the scrim signup post")]
         string messageId)
     {
-        if (!await EnsureOwnerAsync())
-        {
-            return;
-        }
 
         if (!ulong.TryParse(messageId, out var parsedMessageId))
         {
@@ -82,11 +73,6 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         [SlashCommandParameter(Name = "roleid", Description = "The Discord role ID whose members should be pinged if unsigned")]
         string roleId)
     {
-        if (!await EnsureOwnerAsync())
-        {
-            return;
-        }
-
         if (!ulong.TryParse(messageId, out var parsedMessageId))
         {
             await RespondEphemeralAsync("That is not a valid Discord message ID.");
@@ -179,6 +165,98 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         await Context.Interaction.ModifyResponseAsync(m =>
             m.WithContent($"✅ Pinged {unsigned.Count} unsigned member(s) from that role."));
     }
+    
+    [SlashCommand("scrimsignupday", "Show who signed up for a specific day of a scrim")]
+[UsedImplicitly]
+public async Task ShowScrimSignupsByDay(
+    [SlashCommandParameter(Name = "messageid", Description = "The Discord message ID of the scrim signup post")]
+    string messageId,
+    [SlashCommandParameter(Name = "day", Description = "Day of the week (e.g. Monday, tuesday, WED)")]
+    string day)
+{
+
+    if (!ulong.TryParse(messageId, out var parsedMessageId))
+    {
+        await RespondEphemeralAsync("That is not a valid Discord message ID.");
+        return;
+    }
+
+    var matchedDay = ScrimSignupHelper.Weekdays
+        .FirstOrDefault(d =>
+            d.Label.Equals(day, StringComparison.OrdinalIgnoreCase) ||
+            d.ShortLabel.Equals(day, StringComparison.OrdinalIgnoreCase));
+
+    if (matchedDay == default)
+    {
+        await RespondEphemeralAsync(
+            $"Unknown day `{day}`. Valid values: {string.Join(", ", ScrimSignupHelper.Weekdays.Select(d => d.Label))}.");
+        return;
+    }
+
+    await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+
+    var signup = await scrimService.GetSignupByMessageIdAsync(parsedMessageId);
+    if (signup is null)
+    {
+        await Context.Interaction.ModifyResponseAsync(m =>
+            m.WithContent("That message is not a tracked scrim signup message."));
+        return;
+    }
+
+    var available = signup.Entries
+        .Where(e => e.AvailableDays.HasFlag(matchedDay.Flag))
+        .OrderBy(e => ScrimSignupHelper.ResolveRole(e))
+        .ToList();
+
+    var embed = BuildDaySignupEmbed(signup.Id, parsedMessageId, matchedDay.Label, matchedDay.Flag, available);
+
+    await Context.Interaction.ModifyResponseAsync(m =>
+    {
+        m.Content = $"Signups for **{matchedDay.Label}** in message `{parsedMessageId}`";
+        m.Embeds = [embed];
+    });
+}
+
+private static EmbedProperties BuildDaySignupEmbed(
+    long signupId,
+    ulong messageId,
+    string dayLabel,
+    ScrimAvailableDays dayFlag,
+    IReadOnlyList<ScrimSignupEntry> entries)
+{
+    var fields = new List<EmbedFieldProperties>();
+
+    var byRole = entries
+        .GroupBy(e => ScrimSignupHelper.ResolveRole(e))
+        .OrderBy(g => g.Key);
+
+    foreach (var group in byRole)
+    {
+        var lines = group
+            .Select(e => $"<@{e.UserId}> — {ScrimSignupHelper.FormatWeapon(e.Weapon)}")
+            .ToList();
+
+        fields.Add(new EmbedFieldProperties
+        {
+            Name = $"{ScrimSignupHelper.FormatRole(group.Key)} ({lines.Count})",
+            Value = string.Join("\n", lines),
+            Inline = false
+        });
+    }
+
+    return new EmbedProperties
+    {
+        Title = $"Signups for {dayLabel}",
+        Description = entries.Count == 0 ? "No one has signed up for this day." : null,
+        Color = EmbedHelper.Build().Color,
+        Fields = fields.Count > 0 ? fields : null,
+        Footer = new EmbedFooterProperties
+        {
+            Text = $"Scrim Signup ID: {signupId} • Message ID: {messageId}"
+        },
+        Timestamp = DateTimeOffset.UtcNow
+    };
+}
 
     private Task RespondEphemeralAsync(string content)
     {
@@ -188,39 +266,6 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
                 Content = content,
                 Flags = MessageFlags.Ephemeral
             }));
-    }
-
-    private async Task<bool> EnsureOwnerAsync()
-    {
-        var ownerUserId = configuration.GetValue<ulong>("Discord:OwnerUserId");
-
-        if (ownerUserId == 0)
-        {
-            await Context.Interaction.SendResponseAsync(
-                InteractionCallback.Message(
-                    new InteractionMessageProperties
-                    {
-                        Content = "`Discord:OwnerUserId` is not configured yet.",
-                        Flags = MessageFlags.Ephemeral
-                    }));
-
-            return false;
-        }
-
-        if (Context.User.Id != ownerUserId)
-        {
-            await Context.Interaction.SendResponseAsync(
-                InteractionCallback.Message(
-                    new InteractionMessageProperties
-                    {
-                        Content = "Only the bot owner can use this command.",
-                        Flags = MessageFlags.Ephemeral
-                    }));
-
-            return false;
-        }
-
-        return true;
     }
 
     private static IReadOnlyList<EmbedProperties> BuildStatsEmbeds(ScrimStatsReport report)

@@ -99,4 +99,3 @@ public class ScrimSignupEntry
     [Column("updated_at_utc")]
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }
-
