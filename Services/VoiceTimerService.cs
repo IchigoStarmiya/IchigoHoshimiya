@@ -33,6 +33,11 @@ public class VoiceTimerService(
         {
             await StopCoreAsync();
 
+            // Give Discord time to process the voice-leave before immediately rejoining.
+            // Without this, the VoiceStateUpdate + VoiceServerUpdate events that
+            // JoinVoiceChannelAsync waits for may never arrive and the call times out.
+            await Task.Delay(TimeSpan.FromSeconds(3));
+
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
 
