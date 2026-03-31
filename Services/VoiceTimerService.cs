@@ -13,7 +13,7 @@ public class VoiceTimerService(
     ILogger<VoiceTimerService> logger)
     : IVoiceTimerService, IAsyncDisposable
 {
-    private static readonly TimeSpan FourMinutes = TimeSpan.FromMinutes(4);
+    private static readonly TimeSpan FourMinutes = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan FiveMinutes = TimeSpan.FromMinutes(5);
 
     private readonly VoiceTimerSettings _settings = options.Value;
@@ -36,7 +36,7 @@ public class VoiceTimerService(
             // Give Discord time to process the voice-leave before immediately rejoining.
             // Without this, the VoiceStateUpdate + VoiceServerUpdate events that
             // JoinVoiceChannelAsync waits for may never arrive and the call times out.
-            await Task.Delay(TimeSpan.FromSeconds(3));
+            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
 
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
