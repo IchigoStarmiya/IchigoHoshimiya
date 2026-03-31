@@ -9,7 +9,8 @@
 
     <ItemGroup>
         <None Include="Native/libdave.so" Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>libdave.so</Link>
         </None>
     </ItemGroup>
 
