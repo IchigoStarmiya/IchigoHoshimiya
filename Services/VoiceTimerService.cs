@@ -15,7 +15,6 @@ public class VoiceTimerService(
 {
     private static readonly TimeSpan FourMinutes = TimeSpan.FromMinutes(4);
     private static readonly TimeSpan FiveMinutes = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan ReadyTimeout = TimeSpan.FromSeconds(15);
 
     private readonly VoiceTimerSettings _settings = options.Value;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -37,35 +36,60 @@ public class VoiceTimerService(
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
 
+            logger.LogInformation("VoiceTimer: [1] Sending voice join to gateway (guild={GuildId}, channel={ChannelId})",
+                _settings.GuildId, _settings.ChannelId);
+
             _voiceClient = await gatewayClient.JoinVoiceChannelAsync(
                 _settings.GuildId,
                 _settings.ChannelId,
                 new VoiceClientConfiguration(),
                 cancellationToken);
 
-            // Subscribe to Ready before calling StartAsync so we never miss the event.
+            logger.LogInformation("VoiceTimer: [2] JoinVoiceChannelAsync returned — calling StartAsync");
+
+            // Track whether Ready fires during or after StartAsync.
             var readyTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             _voiceClient.Ready += () =>
             {
+                logger.LogInformation("VoiceTimer: [Ready] event fired");
                 readyTcs.TrySetResult();
                 return ValueTask.CompletedTask;
             };
 
-            // StartAsync connects the WebSocket and sends IDENTIFY.
-            // Use CancellationToken.None — the voice connection lifetime is managed
-            // by Dispose(), not by the timer's token.
-            // If StartAsync faults before Ready fires, propagate that error immediately.
-            var startTask = _voiceClient.StartAsync().AsTask();
-            _ = startTask.ContinueWith(
-                t => readyTcs.TrySetException(t.Exception!.InnerExceptions),
-                CancellationToken.None,
-                TaskContinuationOptions.OnlyOnFaulted,
-                TaskScheduler.Default);
+            // Await StartAsync directly (as shown in official docs).
+            // Wrap it in a 20-second timeout so a silent hang surfaces as a real error.
+            try
+            {
+                await _voiceClient.StartAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(20), cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                throw new TimeoutException(
+                    "VoiceClient.StartAsync did not complete within 20 s. " +
+                    "The bot likely cannot reach Discord's voice servers — check outbound UDP/WSS connectivity.");
+            }
 
-            // Wait for the voice server to confirm the connection is ready.
-            using var readyTimeoutCts = new CancellationTokenSource(ReadyTimeout);
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(readyTimeoutCts.Token, cancellationToken);
-            await readyTcs.Task.WaitAsync(linkedCts.Token);
+            logger.LogInformation("VoiceTimer: [3] StartAsync returned");
+
+            // If Ready has not fired yet, wait up to 5 more seconds for it.
+            if (!readyTcs.Task.IsCompleted)
+            {
+                logger.LogInformation("VoiceTimer: [4] Ready not yet fired — waiting up to 5 s");
+                try
+                {
+                    await readyTcs.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+                }
+                catch (TimeoutException)
+                {
+                    logger.LogWarning("VoiceTimer: Ready event did not fire after StartAsync — proceeding anyway");
+                }
+            }
+            else
+            {
+                logger.LogInformation("VoiceTimer: [4] Ready had already fired during StartAsync");
+            }
+
+            logger.LogInformation("VoiceTimer: [5] Creating voice stream and starting timer loop");
 
             _voiceStream = _voiceClient.CreateVoiceStream(new VoiceStreamConfiguration
             {
@@ -73,9 +97,12 @@ public class VoiceTimerService(
             });
 
             _timerTask = Task.Run(() => RunLoopAsync(token), CancellationToken.None);
+
+            logger.LogInformation("VoiceTimer: [6] Timer loop started");
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "VoiceTimer: StartAsync failed");
             await StopCoreAsync();
             throw;
         }
@@ -128,7 +155,6 @@ public class VoiceTimerService(
             _voiceClient = null;
         }
 
-        // Only send the leave update if we actually held a connection.
         if (!hadClient)
             return;
 
@@ -138,7 +164,7 @@ public class VoiceTimerService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to send voice leave state to Discord");
+            logger.LogWarning(ex, "VoiceTimer: Failed to send voice leave state to Discord");
         }
     }
 
@@ -164,7 +190,7 @@ public class VoiceTimerService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Voice timer loop encountered an unhandled error");
+            logger.LogError(ex, "VoiceTimer: Timer loop encountered an unhandled error");
         }
     }
 
@@ -172,13 +198,13 @@ public class VoiceTimerService(
     {
         if (_voiceStream is null)
         {
-            logger.LogWarning("Skipping clip — voice stream is null");
+            logger.LogWarning("VoiceTimer: Skipping clip — voice stream is null");
             return;
         }
 
         if (!File.Exists(filePath))
         {
-            logger.LogWarning("Audio file not found, skipping: {FilePath}", filePath);
+            logger.LogWarning("VoiceTimer: Audio file not found, skipping: {FilePath}", filePath);
             return;
         }
 
@@ -197,7 +223,7 @@ public class VoiceTimerService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to start FFmpeg for {FilePath}", filePath);
+            logger.LogError(ex, "VoiceTimer: Failed to start FFmpeg for {FilePath}", filePath);
             return;
         }
 
@@ -227,7 +253,7 @@ public class VoiceTimerService(
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error while streaming audio from {FilePath}", filePath);
+                    logger.LogError(ex, "VoiceTimer: Error while streaming audio from {FilePath}", filePath);
                 }
                 finally
                 {

@@ -93,6 +93,7 @@ builder.Services
             options.Intents = GatewayIntents.GuildMessages |
                               GatewayIntents.DirectMessages |
                               GatewayIntents.MessageContent |
+                              GatewayIntents.GuildVoiceStates |
                               GatewayIntents.DirectMessageReactions |
                               GatewayIntents.GuildMessageReactions;
         })
