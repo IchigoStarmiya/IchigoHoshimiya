@@ -94,7 +94,11 @@ public class VoiceTimerService(
                 logger.LogInformation("VoiceTimer: [4] Ready had already fired during StartAsync");
             }
 
-            logger.LogInformation("VoiceTimer: [5] Creating voice stream and starting timer loop");
+            logger.LogInformation("VoiceTimer: [5] Entering speaking state");
+
+            await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone), cancellationToken: cancellationToken);
+
+            logger.LogInformation("VoiceTimer: [6] Creating voice stream and starting timer loop");
 
             _voiceStream = _voiceClient.CreateVoiceStream(new VoiceStreamConfiguration
             {
@@ -212,6 +216,9 @@ public class VoiceTimerService(
             logger.LogWarning("VoiceTimer: Audio file not found, skipping: {FilePath}", filePath);
             return;
         }
+
+        if (_voiceClient is not null)
+            await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone), cancellationToken: ct);
 
         Process ffmpeg;
         try
