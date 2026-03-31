@@ -240,6 +240,9 @@ public class VoiceTimerService(
                 catch { /* process already exited */ }
             }))
             {
+                // Drain stderr in the background to prevent FFmpeg blocking on a full pipe buffer.
+                var stderrTask = ffmpeg.StandardError.ReadToEndAsync(CancellationToken.None);
+
                 try
                 {
                     await using var encodeStream = new OpusEncodeStream(
@@ -250,7 +253,10 @@ public class VoiceTimerService(
                         new OpusEncodeStreamConfiguration { FrameDuration = 20.0f },
                         leaveOpen: true);
 
-                    await ffmpeg.StandardOutput.BaseStream.CopyToAsync(encodeStream, ct);
+                    var countingStream = new ByteCountingStream(ffmpeg.StandardOutput.BaseStream);
+                    await countingStream.CopyToAsync(encodeStream, ct);
+
+                    logger.LogInformation("VoiceTimer: Finished streaming {FilePath} ({Bytes} PCM bytes)", filePath, countingStream.BytesRead);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -263,6 +269,10 @@ public class VoiceTimerService(
                 finally
                 {
                     try { await ffmpeg.WaitForExitAsync(CancellationToken.None); } catch { /* ignore */ }
+                    var stderr = await stderrTask;
+                    if (!string.IsNullOrWhiteSpace(stderr))
+                        logger.LogWarning("VoiceTimer: FFmpeg stderr for {FilePath}: {Stderr}", filePath, stderr);
+                    logger.LogInformation("VoiceTimer: FFmpeg exit code {ExitCode} for {FilePath}", ffmpeg.ExitCode, filePath);
                 }
             }
         }
@@ -276,5 +286,34 @@ public class VoiceTimerService(
     {
         await StopCoreAsync();
         _lock.Dispose();
+    }
+}
+
+file sealed class ByteCountingStream(Stream inner) : Stream
+{
+    public long BytesRead { get; private set; }
+
+    public override bool CanRead => inner.CanRead;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override void Flush() { }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var n = inner.Read(buffer, offset, count);
+        BytesRead += n;
+        return n;
+    }
+
+    public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        var n = await inner.ReadAsync(buffer, cancellationToken);
+        BytesRead += n;
+        return n;
     }
 }
