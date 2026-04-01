@@ -18,6 +18,12 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
     [UsedImplicitly]
     public async Task CreateScrimSignup()
     {
+        if (!await IsCouncilMemberAsync())
+        {
+            await RespondEphemeralAsync("You do not have permission to use this command.");
+            return;
+        }
+
         await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
 
         var signup = await scrimService.CreateSignupAsync(Context.Channel.Id, Context.User.Id);
@@ -32,6 +38,11 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         [SlashCommandParameter(Name = "messageid", Description = "The Discord message ID of the scrim signup post")]
         string messageId)
     {
+        if (!await IsCouncilMemberAsync())
+        {
+            await RespondEphemeralAsync("You do not have permission to use this command.");
+            return;
+        }
 
         if (!ulong.TryParse(messageId, out var parsedMessageId))
         {
@@ -73,6 +84,12 @@ public class ScrimSlashCommandModule(IScrimService scrimService, IConfiguration 
         [SlashCommandParameter(Name = "roleid", Description = "The Discord role ID whose members should be pinged if unsigned")]
         string roleId)
     {
+        if (!await IsCouncilMemberAsync())
+        {
+            await RespondEphemeralAsync("You do not have permission to use this command.");
+            return;
+        }
+
         if (!ulong.TryParse(messageId, out var parsedMessageId))
         {
             await RespondEphemeralAsync("That is not a valid Discord message ID.");
@@ -174,6 +191,11 @@ public async Task ShowScrimSignupsByDay(
     [SlashCommandParameter(Name = "day", Description = "Day of the week (e.g. Monday, tuesday, WED)")]
     string day)
 {
+    if (!await IsCouncilMemberAsync())
+    {
+        await RespondEphemeralAsync("You do not have permission to use this command.");
+        return;
+    }
 
     if (!ulong.TryParse(messageId, out var parsedMessageId))
     {
@@ -257,6 +279,15 @@ private static EmbedProperties BuildDaySignupEmbed(
         Timestamp = DateTimeOffset.UtcNow
     };
 }
+
+    private async Task<bool> IsCouncilMemberAsync()
+    {
+        var guildId = Context.Interaction.GuildId;
+        if (guildId is null) return false;
+        var councilRoles = configuration.GetSection("CouncilRole").Get<ulong[]>() ?? [];
+        var member = await restClient.GetGuildUserAsync(guildId.Value, Context.User.Id);
+        return member.RoleIds.Any(r => councilRoles.Contains(r));
+    }
 
     private Task RespondEphemeralAsync(string content)
     {

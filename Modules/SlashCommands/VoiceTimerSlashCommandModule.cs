@@ -1,5 +1,6 @@
 using IchigoHoshimiya.Interfaces;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Configuration;
 using NetCord;
 using NetCord.Rest;
 using NetCord.Services.ApplicationCommands;
@@ -7,13 +8,19 @@ using NetCord.Services.ApplicationCommands;
 namespace IchigoHoshimiya.Modules.SlashCommands;
 
 [UsedImplicitly]
-public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService)
+public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService, IConfiguration configuration, RestClient restClient)
     : ApplicationCommandModule<ApplicationCommandContext>
 {
     [SlashCommand("starttimer", "Start (or reset) the voice channel timer")]
     [UsedImplicitly]
     public async Task StartTimer()
     {
+        if (!await IsCouncilMemberAsync())
+        {
+            await RespondEphemeralAsync("You do not have permission to use this command.");
+            return;
+        }
+
         await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
 
         try
@@ -32,6 +39,12 @@ public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService)
     [UsedImplicitly]
     public async Task StopTimer()
     {
+        if (!await IsCouncilMemberAsync())
+        {
+            await RespondEphemeralAsync("You do not have permission to use this command.");
+            return;
+        }
+
         await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
 
         if (!voiceTimerService.IsRunning)
@@ -51,4 +64,21 @@ public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService)
                 m.WithContent($"Failed to stop the timer: {ex.GetType().Name}: {ex.Message}"));
         }
     }
+
+    private async Task<bool> IsCouncilMemberAsync()
+    {
+        var guildId = Context.Interaction.GuildId;
+        if (guildId is null) return false;
+        var councilRoles = configuration.GetSection("CouncilRole").Get<ulong[]>() ?? [];
+        var member = await restClient.GetGuildUserAsync(guildId.Value, Context.User.Id);
+        return member.RoleIds.Any(r => councilRoles.Contains(r));
+    }
+
+    private Task RespondEphemeralAsync(string content) =>
+        Context.Interaction.SendResponseAsync(
+            InteractionCallback.Message(new InteractionMessageProperties
+            {
+                Content = content,
+                Flags = MessageFlags.Ephemeral
+            }));
 }

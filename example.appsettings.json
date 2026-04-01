@@ -20,5 +20,14 @@
   "TouchingGrassRole": 1081781586929922169,
   "TouchingGrassGuild": 514203145333899276,
   "RefugeeBot": true,
-  "Dsn": ""
+  "Dsn": "",
+  "VoiceTimer": {
+    "GuildId": 897508084619034704,
+    "ChannelId": 1462166549053047066,
+    "StartClipPath": "Audio/jungle.ogg",
+    "FourMinClipPath": "Audio/jungle.ogg",
+    "FiveMinClipPath": "Audio/jungle.ogg",
+    "FfmpegPath": "ffmpeg"
+  },
+  "CouncilRole": [0]
 }
