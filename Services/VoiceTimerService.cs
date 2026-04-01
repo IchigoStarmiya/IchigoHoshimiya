@@ -13,6 +13,9 @@ public class VoiceTimerService(
     ILogger<VoiceTimerService> logger)
     : IVoiceTimerService, IAsyncDisposable
 {
+    // 20 ms of silence at 48 kHz stereo 16-bit PCM (48000 * 2 channels * 2 bytes * 0.02 s).
+    private static readonly byte[] SilencePcmFrame = new byte[3840];
+
     private static readonly TimeSpan TotalDuration = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan SpawnInterval = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan FirstSpawnElapsed = TimeSpan.FromMinutes(5);
@@ -245,6 +248,16 @@ public class VoiceTimerService(
         }
     }
 
+    private async Task SendSilenceFramesAsync(int count, CancellationToken ct)
+    {
+        if (_voiceStream is null) return;
+        await using var enc = new OpusEncodeStream(
+            _voiceStream, PcmFormat.Short, VoiceChannels.Stereo, OpusApplication.Audio,
+            new OpusEncodeStreamConfiguration { FrameDuration = 20.0f }, leaveOpen: true);
+        for (var i = 0; i < count; i++)
+            await enc.WriteAsync(SilencePcmFrame, ct);
+    }
+
     private async Task PlayClipAsync(string filePath, CancellationToken ct)
     {
         if (_voiceStream is null)
@@ -261,6 +274,8 @@ public class VoiceTimerService(
 
         if (_voiceClient is not null)
             await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone), cancellationToken: ct);
+
+        await SendSilenceFramesAsync(5, ct);
 
         Process ffmpeg;
         try
