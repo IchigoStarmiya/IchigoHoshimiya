@@ -29,6 +29,7 @@ public class VoiceTimerService(
     private Stream? _voiceStream;
     private CancellationTokenSource? _cts;
     private Task? _timerTask;
+    private Func<ValueTask>? _voiceCloseHandler;
 
     public bool IsRunning => _timerTask is { IsCompleted: false };
 
@@ -111,6 +112,9 @@ public class VoiceTimerService(
                 NormalizeSpeed = true
             });
 
+            _voiceCloseHandler = OnVoiceClientClosedAsync;
+            _voiceClient.Close += _voiceCloseHandler;
+
             _timerTask = Task.Run(() => RunLoopAsync(token), CancellationToken.None);
 
             logger.LogInformation("VoiceTimer: [6] Timer loop started");
@@ -166,9 +170,13 @@ public class VoiceTimerService(
 
         if (_voiceClient is not null)
         {
+            if (_voiceCloseHandler is not null)
+                _voiceClient.Close -= _voiceCloseHandler;
             try { _voiceClient.Dispose(); } catch { /* ignore */ }
             _voiceClient = null;
         }
+
+        _voiceCloseHandler = null;
 
         if (!hadClient)
             return;
@@ -234,9 +242,13 @@ public class VoiceTimerService(
 
         if (_voiceClient is not null)
         {
+            if (_voiceCloseHandler is not null)
+                _voiceClient.Close -= _voiceCloseHandler;
             try { _voiceClient.Dispose(); } catch { /* ignore */ }
             _voiceClient = null;
         }
+
+        _voiceCloseHandler = null;
 
         try
         {
@@ -245,6 +257,83 @@ public class VoiceTimerService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "VoiceTimer: Failed to send voice leave state to Discord");
+        }
+    }
+
+    private ValueTask OnVoiceClientClosedAsync()
+    {
+        if (_cts is null || _cts.IsCancellationRequested) return ValueTask.CompletedTask;
+        logger.LogWarning("VoiceTimer: Voice connection closed unexpectedly — scheduling reconnect");
+        _ = Task.Run(ReconnectVoiceAsync);
+        return ValueTask.CompletedTask;
+    }
+
+    private async Task ReconnectVoiceAsync()
+    {
+        if (_cts is null || _cts.IsCancellationRequested) return;
+
+        await _lock.WaitAsync();
+        try
+        {
+            if (_cts is null || _cts.IsCancellationRequested) return;
+            var token = _cts.Token;
+
+            logger.LogInformation("VoiceTimer: Re-establishing voice connection after disconnect");
+
+            if (_voiceStream is not null)
+            {
+                try { await _voiceStream.DisposeAsync(); } catch { /* ignore */ }
+                _voiceStream = null;
+            }
+
+            if (_voiceClient is not null)
+            {
+                // Handler already fired — it's closed, no need to unsubscribe
+                try { _voiceClient.Dispose(); } catch { /* ignore */ }
+                _voiceClient = null;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(3), token);
+
+            _voiceClient = await gatewayClient.JoinVoiceChannelAsync(
+                _settings.GuildId, _settings.ChannelId, new VoiceClientConfiguration(), token);
+
+            var readyTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _voiceClient.Ready += () =>
+            {
+                logger.LogInformation("VoiceTimer: [Reconnect][Ready] fired");
+                readyTcs.TrySetResult();
+                return ValueTask.CompletedTask;
+            };
+
+            await _voiceClient.StartAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(20), token);
+
+            if (!readyTcs.Task.IsCompleted)
+            {
+                try { await readyTcs.Task.WaitAsync(TimeSpan.FromSeconds(5), token); }
+                catch (TimeoutException) { logger.LogWarning("VoiceTimer: Ready event did not fire after voice reconnect"); }
+            }
+
+            await _voiceClient.EnterSpeakingStateAsync(new SpeakingProperties(SpeakingFlags.Microphone), cancellationToken: token);
+
+            _voiceStream = _voiceClient.CreateVoiceStream(new VoiceStreamConfiguration { NormalizeSpeed = true });
+
+            _voiceCloseHandler = OnVoiceClientClosedAsync;
+            _voiceClient.Close += _voiceCloseHandler;
+
+            logger.LogInformation("VoiceTimer: Voice reconnected successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            // Timer was stopped during reconnect.
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "VoiceTimer: Failed to reconnect voice");
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 
