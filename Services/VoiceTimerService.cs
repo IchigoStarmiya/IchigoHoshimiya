@@ -13,8 +13,11 @@ public class VoiceTimerService(
     ILogger<VoiceTimerService> logger)
     : IVoiceTimerService, IAsyncDisposable
 {
-    private static readonly TimeSpan FourMinutes = TimeSpan.FromMinutes(1);
-    private static readonly TimeSpan FiveMinutes = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan TotalDuration = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan SpawnInterval = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan FirstSpawnElapsed = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Warn40s = TimeSpan.FromSeconds(40);
+    private static readonly TimeSpan Warn20s = TimeSpan.FromSeconds(20);
 
     private readonly VoiceTimerSettings _settings = options.Value;
     private readonly SemaphoreSlim _lock = new(1, 1);
@@ -183,23 +186,62 @@ public class VoiceTimerService(
         {
             await PlayClipAsync(_settings.StartClipPath, ct);
 
-            await Task.Delay(FourMinutes, ct);
+            var startTime = DateTimeOffset.UtcNow;
+            var spawnElapsed = FirstSpawnElapsed;
 
-            await PlayClipAsync(_settings.FourMinClipPath, ct);
-
-            while (!ct.IsCancellationRequested)
+            while (spawnElapsed <= TotalDuration)
             {
-                await Task.Delay(FiveMinutes, ct);
-                await PlayClipAsync(_settings.FiveMinClipPath, ct);
+                await WaitUntilAsync(startTime + spawnElapsed - Warn40s, ct);
+                await PlayClipAsync(_settings.FortySecClipPath, ct);
+
+                await WaitUntilAsync(startTime + spawnElapsed - Warn20s, ct);
+                await PlayClipAsync(_settings.TwentySecClipPath, ct);
+
+                spawnElapsed += SpawnInterval;
             }
+
+            // Natural end at 0:00 — disconnect without deadlocking on _timerTask.
+            logger.LogInformation("VoiceTimer: Timer reached 0:00, disconnecting");
+            await CleanupVoiceAsync();
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // Normal stop.
+            // Normal stop via StopAsync.
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "VoiceTimer: Timer loop encountered an unhandled error");
+        }
+    }
+
+    private static async Task WaitUntilAsync(DateTimeOffset target, CancellationToken ct)
+    {
+        var remaining = target - DateTimeOffset.UtcNow;
+        if (remaining > TimeSpan.Zero)
+            await Task.Delay(remaining, ct);
+    }
+
+    private async Task CleanupVoiceAsync()
+    {
+        if (_voiceStream is not null)
+        {
+            try { await _voiceStream.DisposeAsync(); } catch { /* ignore */ }
+            _voiceStream = null;
+        }
+
+        if (_voiceClient is not null)
+        {
+            try { _voiceClient.Dispose(); } catch { /* ignore */ }
+            _voiceClient = null;
+        }
+
+        try
+        {
+            await gatewayClient.UpdateVoiceStateAsync(new VoiceStateProperties(_settings.GuildId, null));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "VoiceTimer: Failed to send voice leave state to Discord");
         }
     }
 
