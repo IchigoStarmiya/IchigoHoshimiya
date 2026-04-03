@@ -80,6 +80,7 @@ builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddScoped<IScrimService, ScrimService>();
 builder.Services.AddHostedService<ScrimAutoCloseService>();
 builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
+builder.Services.AddSingleton<IMaiJungleService, MaiJungleService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {
