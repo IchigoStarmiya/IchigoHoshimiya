@@ -203,10 +203,10 @@ public class VoiceTimerService(
             while (spawnElapsed <= TotalDuration)
             {
                 await WaitUntilAsync(startTime + spawnElapsed - Warn40s, ct);
-                await PlayClipAsync(_settings.FortySecClipPath, ct);
+                await PlayClipAsync(_settings.Warn40s, ct);
 
                 await WaitUntilAsync(startTime + spawnElapsed - Warn20s, ct);
-                await PlayClipAsync(_settings.TwentySecClipPath, ct);
+                await PlayClipAsync(_settings.Warn20s, ct);
 
                 spawnElapsed += SpawnInterval;
             }

@@ -25,8 +25,8 @@
     "GuildId": 897508084619034704,
     "ChannelId": 1462166549053047066,
     "StartClipPath": "Audio/jungle.ogg",
-    "FourMinClipPath": "Audio/jungle.ogg",
-    "FiveMinClipPath": "Audio/jungle.ogg",
+    "FortySecondSpawn": "Audio/respawn40.mp3",
+    "TwentySecondSpawn": "Audio/respawn20.mp3",
     "FfmpegPath": "ffmpeg"
   },
   "CouncilRole": [0]
