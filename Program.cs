@@ -1,4 +1,4 @@
-﻿using IchigoHoshimiya;
+using IchigoHoshimiya;
 using IchigoHoshimiya.Adapters;
 using IchigoHoshimiya.BackgroundServices;
 using IchigoHoshimiya.Context;
@@ -44,19 +44,22 @@ builder.Services.Configure<AnimeThemesUpdaterSettings>(
 builder.Services.Configure<VoiceTimerSettings>(
     builder.Configuration.GetSection("VoiceTimer"));
 
-builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
-builder.Services.AddHttpClient<SeasonalCalendarDbUpdateService>();
-builder.Services.AddHttpClient<RssSearcherAndPosterService>();
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
+    builder.Services.AddHttpClient<SeasonalCalendarDbUpdateService>();
+    builder.Services.AddHttpClient<RssSearcherAndPosterService>();
 
-builder.Services.AddHostedService<AnimeThemesDbUpdateService>();
-builder.Services.AddHostedService<SeasonalCalendarDbUpdateService>();
-builder.Services.AddHostedService<RssSearcherAndPosterService>();
-builder.Services.AddHostedService<TicketBackupService>();
+    builder.Services.AddHostedService<AnimeThemesDbUpdateService>();
+    builder.Services.AddHostedService<SeasonalCalendarDbUpdateService>();
+    builder.Services.AddHostedService<RssSearcherAndPosterService>();
+    builder.Services.AddHostedService<TicketBackupService>();
 
-builder.Services.AddSingleton<GrassToucherReleaserService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
+    builder.Services.AddSingleton<GrassToucherReleaserService>();
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
 
-// builder.Services.AddHostedService<DanseMacabreBackgroundService>();
+    // builder.Services.AddHostedService<DanseMacabreBackgroundService>();
+}
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -70,7 +73,6 @@ builder.Services.AddDbContext<IchigoContext>(options =>
 
 builder.Services.AddTransient<IClient, RestClientAdapter>();
 builder.Services.AddSingleton<IPingService, PingService>();
-builder.Services.AddHostedService<TicketBackupService>();
 builder.Services.AddSingleton<ITwitterReplacementService, TwitterReplacementService>();
 builder.Services.AddScoped<IAnimethemeService, AnimethemeService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
@@ -78,9 +80,13 @@ builder.Services.AddScoped<IRssService, RssService>();
 builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddScoped<IScrimService, ScrimService>();
-builder.Services.AddHostedService<ScrimAutoCloseService>();
 builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
 builder.Services.AddSingleton<IMaiJungleService, MaiJungleService>();
+
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddHostedService<ScrimAutoCloseService>();
+}
 
 builder.Services.Configure<HostOptions>(o =>
 {
