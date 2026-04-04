@@ -80,6 +80,8 @@ builder.Services.AddScoped<IRssService, RssService>();
 builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddScoped<IScrimService, ScrimService>();
+builder.Services.AddHttpClient<IAnilistService, AnilistService>();
+builder.Services.AddSingleton<IHelpService, HelpService>();
 builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
 builder.Services.AddSingleton<IMaiJungleService, MaiJungleService>();
 
