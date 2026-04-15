@@ -53,7 +53,6 @@ if (!builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<AnimeThemesDbUpdateService>();
     builder.Services.AddHostedService<SeasonalCalendarDbUpdateService>();
     builder.Services.AddHostedService<RssSearcherAndPosterService>();
-    builder.Services.AddHostedService<TicketBackupService>();
 
     builder.Services.AddSingleton<GrassToucherReleaserService>();
     builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
@@ -84,11 +83,6 @@ builder.Services.AddHttpClient<IAnilistService, AnilistService>();
 builder.Services.AddSingleton<IHelpService, HelpService>();
 builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
 builder.Services.AddSingleton<IMaiJungleService, MaiJungleService>();
-
-if (!builder.Environment.IsDevelopment())
-{
-    builder.Services.AddHostedService<ScrimAutoCloseService>();
-}
 
 builder.Services.Configure<HostOptions>(o =>
 {
