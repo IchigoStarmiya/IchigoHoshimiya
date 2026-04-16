@@ -7,7 +7,7 @@ using NetCord.Services.Commands;
 namespace IchigoHoshimiya.Modules.TextCommands;
 
 [UsedImplicitly]
-public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, IMaiJungleService maiJungleService, IConfiguration configuration, RestClient restClient)
+public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, IConfiguration configuration, RestClient restClient)
     : CommandModule<CommandContext>
 {
     [Command("starttimer")]
@@ -55,54 +55,6 @@ public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, I
         catch (Exception ex)
         {
             await ReplyAsync($"Failed to stop the timer: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    [Command("maijungle")]
-    [UsedImplicitly]
-    public async Task MaiJungle()
-    {
-        if (!await IsCouncilMemberAsync())
-        {
-            await ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        try
-        {
-            await maiJungleService.StartAsync();
-            await ReplyAsync("MaiJungle started.");
-        }
-        catch (Exception ex)
-        {
-            await ReplyAsync($"Failed to start MaiJungle: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    [Command("stopmaijungle")]
-    [UsedImplicitly]
-    public async Task StopMaiJungle()
-    {
-        if (!await IsCouncilMemberAsync())
-        {
-            await ReplyAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        if (!maiJungleService.IsRunning)
-        {
-            await ReplyAsync("MaiJungle is not running.");
-            return;
-        }
-
-        try
-        {
-            await maiJungleService.StopAsync();
-            await ReplyAsync("MaiJungle stopped and bot disconnected.");
-        }
-        catch (Exception ex)
-        {
-            await ReplyAsync($"Failed to stop MaiJungle: {ex.GetType().Name}: {ex.Message}");
         }
     }
 

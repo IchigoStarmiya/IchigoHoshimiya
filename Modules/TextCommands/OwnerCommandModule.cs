@@ -8,7 +8,7 @@ using NetCord.Services.Commands;
 
 namespace IchigoHoshimiya.Modules.TextCommands;
 
-public class OwnerCommandModule(IClient ichigoClient, IConfiguration configuration) : CommandModule<CommandContext>
+public class OwnerCommandModule(IClient ichigoClient, IConfiguration configuration, RestClient restClient) : CommandModule<CommandContext>
 {
     [Command("send")]
     [UsedImplicitly]
@@ -37,5 +37,16 @@ public class OwnerCommandModule(IClient ichigoClient, IConfiguration configurati
             Embeds = [EmbedHelper.Build(null, text)]
         };
         await ichigoClient.EditEmbedMessageAsync(ulong.Parse(channelId), ulong.Parse(messageId), props);
+    }
+
+    [Command("leaveserver")]
+    [UsedImplicitly]
+    public async Task LeaveServerCommand(ulong guildId)
+    {
+        var ownerUserId = configuration.GetValue<ulong>("Discord:OwnerUserId");
+        if (Context.Message.Author.Id != ownerUserId)
+            return;
+
+        await restClient.LeaveGuildAsync(guildId);
     }
 }

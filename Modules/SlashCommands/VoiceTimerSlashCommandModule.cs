@@ -8,7 +8,7 @@ using NetCord.Services.ApplicationCommands;
 namespace IchigoHoshimiya.Modules.SlashCommands;
 
 [UsedImplicitly]
-public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService, IMaiJungleService maiJungleService, IConfiguration configuration, RestClient restClient)
+public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService, IConfiguration configuration, RestClient restClient)
     : ApplicationCommandModule<ApplicationCommandContext>
 {
     [SlashCommand("starttimer", "Start (or reset) the voice channel timer")]
@@ -62,60 +62,6 @@ public class VoiceTimerSlashCommandModule(IVoiceTimerService voiceTimerService, 
         {
             await Context.Interaction.ModifyResponseAsync(m =>
                 m.WithContent($"Failed to stop the timer: {ex.GetType().Name}: {ex.Message}"));
-        }
-    }
-
-    [SlashCommand("maijungle", "Start repeating the MaiJungle audio clip every minute")]
-    [UsedImplicitly]
-    public async Task MaiJungle()
-    {
-        if (!await IsCouncilMemberAsync())
-        {
-            await RespondEphemeralAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
-
-        try
-        {
-            await maiJungleService.StartAsync();
-            await Context.Interaction.ModifyResponseAsync(m => m.WithContent("MaiJungle started."));
-        }
-        catch (Exception ex)
-        {
-            await Context.Interaction.ModifyResponseAsync(m =>
-                m.WithContent($"Failed to start MaiJungle: {ex.GetType().Name}: {ex.Message}"));
-        }
-    }
-
-    [SlashCommand("stopmaijungle", "Stop the MaiJungle repeater and disconnect the bot")]
-    [UsedImplicitly]
-    public async Task StopMaiJungle()
-    {
-        if (!await IsCouncilMemberAsync())
-        {
-            await RespondEphemeralAsync("You do not have permission to use this command.");
-            return;
-        }
-
-        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage(MessageFlags.Ephemeral));
-
-        if (!maiJungleService.IsRunning)
-        {
-            await Context.Interaction.ModifyResponseAsync(m => m.WithContent("MaiJungle is not running."));
-            return;
-        }
-
-        try
-        {
-            await maiJungleService.StopAsync();
-            await Context.Interaction.ModifyResponseAsync(m => m.WithContent("MaiJungle stopped and bot disconnected."));
-        }
-        catch (Exception ex)
-        {
-            await Context.Interaction.ModifyResponseAsync(m =>
-                m.WithContent($"Failed to stop MaiJungle: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
