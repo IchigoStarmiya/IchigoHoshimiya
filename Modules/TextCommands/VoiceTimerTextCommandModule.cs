@@ -1,20 +1,34 @@
 using IchigoHoshimiya.Interfaces;
+using IchigoHoshimiya.Services;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NetCord.Rest;
 using NetCord.Services.Commands;
 
 namespace IchigoHoshimiya.Modules.TextCommands;
 
 [UsedImplicitly]
-public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, IConfiguration configuration, RestClient restClient)
+public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, IOptions<VoiceTimerSettings> options, RestClient restClient)
     : CommandModule<CommandContext>
 {
     [Command("starttimer")]
     [UsedImplicitly]
     public async Task StartTimer()
     {
-        if (!await IsCouncilMemberAsync())
+        var guildId = Context.Message.GuildId;
+        if (guildId is null)
+        {
+            await ReplyAsync("This command must be used in a server.");
+            return;
+        }
+
+        if (!voiceTimerService.IsConfigured(guildId.Value))
+        {
+            await ReplyAsync("This server is not configured for the jungle timer.");
+            return;
+        }
+
+        if (!await IsAuthorizedAsync(guildId.Value))
         {
             await ReplyAsync("You do not have permission to use this command.");
             return;
@@ -22,7 +36,7 @@ public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, I
 
         try
         {
-            await voiceTimerService.StartAsync();
+            await voiceTimerService.StartAsync(guildId.Value);
             await ReplyAsync("Timer started.");
         }
         catch (Exception ex)
@@ -35,13 +49,26 @@ public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, I
     [UsedImplicitly]
     public async Task StopTimer()
     {
-        if (!await IsCouncilMemberAsync())
+        var guildId = Context.Message.GuildId;
+        if (guildId is null)
+        {
+            await ReplyAsync("This command must be used in a server.");
+            return;
+        }
+
+        if (!voiceTimerService.IsConfigured(guildId.Value))
+        {
+            await ReplyAsync("This server is not configured for the jungle timer.");
+            return;
+        }
+
+        if (!await IsAuthorizedAsync(guildId.Value))
         {
             await ReplyAsync("You do not have permission to use this command.");
             return;
         }
 
-        if (!voiceTimerService.IsRunning)
+        if (!voiceTimerService.IsRunning(guildId.Value))
         {
             await ReplyAsync("The timer is not running.");
             return;
@@ -49,7 +76,7 @@ public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, I
 
         try
         {
-            await voiceTimerService.StopAsync();
+            await voiceTimerService.StopAsync(guildId.Value);
             await ReplyAsync("Timer stopped and bot disconnected.");
         }
         catch (Exception ex)
@@ -58,13 +85,12 @@ public class VoiceTimerTextCommandModule(IVoiceTimerService voiceTimerService, I
         }
     }
 
-    private async Task<bool> IsCouncilMemberAsync()
+    private async Task<bool> IsAuthorizedAsync(ulong guildId)
     {
-        var guildId = Context.Message.GuildId;
-        if (guildId is null) return false;
-        var councilRoles = configuration.GetSection("CouncilRole").Get<ulong[]>() ?? [];
-        var member = await restClient.GetGuildUserAsync(guildId.Value, Context.Message.Author.Id);
-        return member.RoleIds.Any(r => councilRoles.Contains(r));
+        var guildSettings = options.Value.Servers.FirstOrDefault(s => s.GuildId == guildId);
+        if (guildSettings is null) return false;
+        var member = await restClient.GetGuildUserAsync(guildId, Context.Message.Author.Id);
+        return member.RoleIds.Contains(guildSettings.AuthorizedRoleId);
     }
 
     private Task ReplyAsync(string content) =>
