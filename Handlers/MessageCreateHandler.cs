@@ -9,9 +9,16 @@ namespace IchigoHoshimiya.Handlers;
 public class MessageCreateHandler(IClient client, ITwitterReplacementService twitterReplacementService)
     : IMessageCreateGatewayHandler
 {
+    private static readonly HashSet<ulong> SAllowedGuildIds = [549910122600857610, 514203145333899276];
+
     public ValueTask HandleAsync(Message message)
     {
         if (message.Author.IsBot)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        if (message.GuildId is not { } guildId || !SAllowedGuildIds.Contains(guildId))
         {
             return ValueTask.CompletedTask;
         }
