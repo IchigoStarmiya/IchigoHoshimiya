@@ -82,6 +82,8 @@ builder.Services.AddHttpClient<IAnilistService, AnilistService>();
 builder.Services.AddSingleton<IHelpService, HelpService>();
 builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
 
+builder.Services.AddHostedService<SentryHeartbeatService>();
+
 builder.Services.Configure<HostOptions>(o =>
 {
     o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
