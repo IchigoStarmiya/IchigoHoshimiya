@@ -41,9 +41,6 @@ builder.Logging.AddSentry(options =>
 builder.Services.Configure<AnimeThemesUpdaterSettings>(
     builder.Configuration.GetSection("AnimeThemesUpdater"));
 
-builder.Services.Configure<VoiceTimerSettings>(
-    builder.Configuration.GetSection("VoiceTimer"));
-
 if (!builder.Environment.IsDevelopment())
 {
     builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
@@ -80,9 +77,6 @@ builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddHttpClient<IAnilistService, AnilistService>();
 builder.Services.AddSingleton<IHelpService, HelpService>();
-builder.Services.AddSingleton<IVoiceTimerService, VoiceTimerService>();
-
-builder.Services.AddHostedService<SentryHeartbeatService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {
@@ -96,7 +90,6 @@ builder.Services
             options.Intents = GatewayIntents.GuildMessages |
                               GatewayIntents.DirectMessages |
                               GatewayIntents.MessageContent |
-                              GatewayIntents.GuildVoiceStates |
                               GatewayIntents.DirectMessageReactions |
                               GatewayIntents.GuildMessageReactions;
         })
