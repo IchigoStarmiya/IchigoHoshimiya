@@ -41,6 +41,15 @@ builder.Logging.AddSentry(options =>
 builder.Services.Configure<AnimeThemesUpdaterSettings>(
     builder.Configuration.GetSection("AnimeThemesUpdater"));
 
+builder.Services.Configure<HetznerSettings>(
+    builder.Configuration.GetSection("Hetzner"));
+
+builder.Services.AddHttpClient<IHetznerService, HetznerService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.hetzner.cloud");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 if (!builder.Environment.IsDevelopment())
 {
     builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
