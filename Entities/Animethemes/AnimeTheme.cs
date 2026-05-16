@@ -21,7 +21,7 @@ public class AnimeTheme
     [Column("deleted_at", TypeName = "timestamp(6)")]
     public DateTime? DeletedAt { get; set; }
 
-    [Column("type")] public int? Type { get; set; }
+    [Column("type")] public int Type { get; set; }
 
     [Column("sequence")] public int? Sequence { get; set; }
 

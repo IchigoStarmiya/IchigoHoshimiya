@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -28,22 +28,13 @@ public class Anime
     [Column("synopsis", TypeName = "text")]
     public string? Synopsis { get; set; }
 
-    [Column("media_format")] public int MediaFormat { get; set; }
-
-    [InverseProperty("Anime")]
-    public virtual ICollection<AnimeImage> AnimeImages { get; set; } = new List<AnimeImage>();
-
-    [InverseProperty("Anime")]
-    public virtual ICollection<AnimeResource> AnimeResources { get; set; } = new List<AnimeResource>();
+    [Column("format")] public int? Format { get; set; }
 
     [InverseProperty("Anime")]
     public virtual ICollection<AnimeSeries> AnimeSeries { get; set; } = new List<AnimeSeries>();
 
     [InverseProperty("Anime")]
     public virtual ICollection<AnimeStudio> AnimeStudios { get; set; } = new List<AnimeStudio>();
-
-    [InverseProperty("Anime")]
-    public virtual ICollection<AnimeSynonym> AnimeSynonyms { get; set; } = new List<AnimeSynonym>();
 
     [InverseProperty("Anime")]
     public virtual ICollection<AnimeTheme> AnimeThemes { get; set; } = new List<AnimeTheme>();

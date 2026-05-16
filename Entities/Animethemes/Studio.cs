@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -23,10 +23,4 @@ public class Studio
 
     [InverseProperty("Studio")]
     public virtual ICollection<AnimeStudio> AnimeStudios { get; set; } = new List<AnimeStudio>();
-
-    [InverseProperty("Studio")]
-    public virtual ICollection<StudioImage> StudioImages { get; set; } = new List<StudioImage>();
-
-    [InverseProperty("Studio")]
-    public virtual ICollection<StudioResource> StudioResources { get; set; } = new List<StudioResource>();
 }

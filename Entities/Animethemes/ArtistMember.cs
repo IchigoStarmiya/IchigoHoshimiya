@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +24,8 @@ public class ArtistMember
     [Column("alias")] [StringLength(255)] public string? Alias { get; set; }
 
     [Column("notes")] [StringLength(255)] public string? Notes { get; set; }
+
+    [Column("relevance")] public int Relevance { get; set; }
 
     [ForeignKey("ArtistId")]
     [InverseProperty("ArtistMemberArtists")]

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -19,13 +19,12 @@ public class Song
 
     [Column("title")] [StringLength(255)] public string? Title { get; set; }
 
-    [InverseProperty("Song")] public virtual ICollection<AnimeTheme> AnimeThemes { get; set; } = new List<AnimeTheme>();
+    [Column("title_native")]
+    [StringLength(255)]
+    public string? TitleNative { get; set; }
 
-    [InverseProperty("Song")] public virtual ICollection<ArtistSong> ArtistSongs { get; set; } = new List<ArtistSong>();
+    [InverseProperty("Song")] public virtual ICollection<AnimeTheme> AnimeThemes { get; set; } = new List<AnimeTheme>();
 
     [InverseProperty("Song")]
     public virtual ICollection<Performance> Performances { get; set; } = new List<Performance>();
-
-    [InverseProperty("Song")]
-    public virtual ICollection<SongResource> SongResources { get; set; } = new List<SongResource>();
 }

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -19,14 +19,8 @@ public class Image
 
     [Column("path")] [StringLength(255)] public string Path { get; set; } = null!;
 
-    [Column("facet")] public int? Facet { get; set; }
+    [Column("facet")] public int Facet { get; set; }
 
     [InverseProperty("Image")]
-    public virtual ICollection<AnimeImage> AnimeImages { get; set; } = new List<AnimeImage>();
-
-    [InverseProperty("Image")]
-    public virtual ICollection<ArtistImage> ArtistImages { get; set; } = new List<ArtistImage>();
-
-    [InverseProperty("Image")]
-    public virtual ICollection<StudioImage> StudioImages { get; set; } = new List<StudioImage>();
+    public virtual ICollection<Imageable> Imageables { get; set; } = new List<Imageable>();
 }

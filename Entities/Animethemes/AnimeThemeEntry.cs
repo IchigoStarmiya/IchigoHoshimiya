@@ -19,7 +19,7 @@ public class AnimeThemeEntry
     [Column("deleted_at", TypeName = "timestamp(6)")]
     public DateTime? DeletedAt { get; set; }
 
-    [Column("version")] public int? Version { get; set; }
+    [Column("version")] public int Version { get; set; }
 
     [Column("episodes")]
     [StringLength(255)]

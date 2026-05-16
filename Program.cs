@@ -52,7 +52,6 @@ builder.Services.AddHttpClient<IHetznerService, HetznerService>(client =>
 
 if (!builder.Environment.IsDevelopment())
 {
-    builder.Services.AddHttpClient<AnimeThemesDbUpdateService>();
     builder.Services.AddHttpClient<SeasonalCalendarDbUpdateService>();
     builder.Services.AddHttpClient<RssSearcherAndPosterService>();
 
@@ -79,6 +78,7 @@ builder.Services.AddDbContext<IchigoContext>(options =>
 builder.Services.AddTransient<IClient, RestClientAdapter>();
 builder.Services.AddSingleton<IPingService, PingService>();
 builder.Services.AddSingleton<ITwitterReplacementService, TwitterReplacementService>();
+builder.Services.AddSingleton<IAnimethemeCache, AnimethemeCache>();
 builder.Services.AddScoped<IAnimethemeService, AnimethemeService>();
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IRssService, RssService>();

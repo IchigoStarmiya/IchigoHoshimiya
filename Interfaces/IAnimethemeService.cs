@@ -4,7 +4,7 @@ namespace IchigoHoshimiya.Interfaces;
 
 public interface IAnimethemeService
 {
-    public string GetAnimetheme(string query, string? slug);
+    public Task<string> GetAnimetheme(string query, string? slug);
 
-    public EmbedProperties GetAllAnimethemes(string query, string? slug);
+    public Task<EmbedProperties> GetAllAnimethemes(string query, string? slug);
 }

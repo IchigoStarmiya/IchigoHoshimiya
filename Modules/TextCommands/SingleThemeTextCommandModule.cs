@@ -9,7 +9,7 @@ public class SingleThemeTextCommandModule(IAnimethemeService animethemeService) 
 {
     [Command("theme")]
     [UsedImplicitly]
-    public string GetAnimetheme([CommandParameter(Remainder = true)] string query)
+    public Task<string> GetAnimetheme([CommandParameter(Remainder = true)] string query)
     {
         return animethemeService.GetAnimetheme(query, null);
     }

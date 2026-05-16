@@ -1,22 +1,18 @@
 using System.Text;
 using FuzzySharp;
-using IchigoHoshimiya.Context;
 using IchigoHoshimiya.DTO;
 using IchigoHoshimiya.Entities.Animethemes;
 using IchigoHoshimiya.Helpers;
 using IchigoHoshimiya.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using NetCord;
 using NetCord.Rest;
 
 namespace IchigoHoshimiya.Services;
 
-public class AnimethemeService(AnimethemesDbContext dbContext) : IAnimethemeService
+public class AnimethemeService(IAnimethemeCache cache) : IAnimethemeService
 {
-    public EmbedProperties GetAllAnimethemes(string query, string? slug)
+    public async Task<EmbedProperties> GetAllAnimethemes(string query, string? slug)
     {
-        var fuzzyMatchesDto = GetFuzzyMatches(query, 10, slug);
+        var fuzzyMatchesDto = await GetFuzzyMatches(query, 10, slug);
 
         if (fuzzyMatchesDto.Count == 0)
         {
@@ -34,13 +30,13 @@ public class AnimethemeService(AnimethemesDbContext dbContext) : IAnimethemeServ
                 $"{i + 1}. [{match.Anime} {match.Slug} - {match.Theme}]({match.Link})"
             );
         }
-        
-        return EmbedHelper.Build("Your search results",  embedDescriptionBuilder.ToString());
+
+        return EmbedHelper.Build("Your search results", embedDescriptionBuilder.ToString());
     }
 
-    public string GetAnimetheme(string query, string? slug)
+    public async Task<string> GetAnimetheme(string query, string? slug)
     {
-        var fuzzyMatchesDto = GetFuzzyMatches(query, 5, slug);
+        var fuzzyMatchesDto = await GetFuzzyMatches(query, 5, slug);
 
         if (fuzzyMatchesDto.Count == 0)
         {
@@ -74,26 +70,18 @@ public class AnimethemeService(AnimethemesDbContext dbContext) : IAnimethemeServ
 
     // Cute to have some code debt so let's keep it this way for now since it's still kinda "in beta"
     // Clean up in the future for sure copium
-    private List<AnimethemeDto> GetFuzzyMatches(string query, int count, string? slug)
+    private async Task<List<AnimethemeDto>> GetFuzzyMatches(string query, int count, string? slug)
     {
-        var builderQuery = dbContext.AnimeThemeEntries
-                                    .AsSplitQuery()
-                                    .Include(e => e.Theme)
-                                    .ThenInclude(t => t.Song)
-                                    .Include(e => e.Theme)
-                                    .ThenInclude(t => t.Anime)
-                                    .ThenInclude(a => a.AnimeSynonyms)
-                                    .Include(e => e.AnimeThemeEntryVideos)
-                                    .ThenInclude(v => v.Video)
-                                    .Where(e => e.Theme.Song != null)
-                                    .Where(e => e.AnimeThemeEntryVideos.Any());
+        var snapshot = await cache.GetAsync();
+
+        IEnumerable<AnimeThemeEntry> candidates = snapshot.Entries;
 
         if (!string.IsNullOrWhiteSpace(slug))
         {
-            builderQuery = builderQuery.Where(e => e.Theme.Slug == slug);
+            candidates = candidates.Where(e => e.Theme.Slug == slug);
         }
 
-        var candidates = builderQuery.ToList();
+        var synonymsByAnimeId = snapshot.SynonymsByAnimeId;
 
         var normalizedQuery = Normalize(query);
         var queryTokens = normalizedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -105,9 +93,11 @@ public class AnimethemeService(AnimethemesDbContext dbContext) : IAnimethemeServ
                                 {
                                     var animeName = Normalize(e.Theme.Anime.Name);
 
-                                    var synonyms = e.Theme.Anime.AnimeSynonyms
-                                                    .Select(s => Normalize(s.Text ?? ""))
-                                                    .ToList();
+                                    var synonyms = synonymsByAnimeId.TryGetValue(
+                                        e.Theme.AnimeId,
+                                        out var rawSynonyms)
+                                        ? rawSynonyms.Select(s => Normalize(s)).ToList()
+                                        : new List<string>();
 
                                     var themeTitle = Normalize(e.Theme.Song?.Title ?? "");
 

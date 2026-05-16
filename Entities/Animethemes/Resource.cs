@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -17,21 +17,12 @@ public class Resource
     [Column("deleted_at", TypeName = "timestamp(6)")]
     public DateTime? DeletedAt { get; set; }
 
-    [Column("site")] public int? Site { get; set; }
+    [Column("site")] public int Site { get; set; }
 
-    [Column("link")] [StringLength(255)] public string? Link { get; set; }
+    [Column("link")] [StringLength(255)] public string Link { get; set; } = null!;
 
     [Column("external_id")] public int? ExternalId { get; set; }
 
     [InverseProperty("Resource")]
-    public virtual ICollection<AnimeResource> AnimeResources { get; set; } = new List<AnimeResource>();
-
-    [InverseProperty("Resource")]
-    public virtual ICollection<ArtistResource> ArtistResources { get; set; } = new List<ArtistResource>();
-
-    [InverseProperty("Resource")]
-    public virtual ICollection<SongResource> SongResources { get; set; } = new List<SongResource>();
-
-    [InverseProperty("Resource")]
-    public virtual ICollection<StudioResource> StudioResources { get; set; } = new List<StudioResource>();
+    public virtual ICollection<Resourceable> Resourceables { get; set; } = new List<Resourceable>();
 }

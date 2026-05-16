@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IchigoHoshimiya.Entities.Animethemes;
@@ -25,23 +25,14 @@ public class Artist
     public string? Information { get; set; }
 
     [InverseProperty("Artist")]
-    public virtual ICollection<ArtistImage> ArtistImages { get; set; } = new List<ArtistImage>();
-
-    [InverseProperty("Artist")]
     public virtual ICollection<ArtistMember> ArtistMemberArtists { get; set; } = new List<ArtistMember>();
 
     [InverseProperty("Member")]
     public virtual ICollection<ArtistMember> ArtistMemberMembers { get; set; } = new List<ArtistMember>();
 
     [InverseProperty("Artist")]
-    public virtual ICollection<ArtistResource> ArtistResources { get; set; } = new List<ArtistResource>();
-
-    [InverseProperty("Artist")]
-    public virtual ICollection<ArtistSong> ArtistSongs { get; set; } = new List<ArtistSong>();
-
-    [InverseProperty("Artist")]
-    public virtual ICollection<Membership> MembershipArtists { get; set; } = new List<Membership>();
+    public virtual ICollection<Performance> PerformanceArtists { get; set; } = new List<Performance>();
 
     [InverseProperty("Member")]
-    public virtual ICollection<Membership> MembershipMembers { get; set; } = new List<Membership>();
+    public virtual ICollection<Performance> PerformanceMembers { get; set; } = new List<Performance>();
 }

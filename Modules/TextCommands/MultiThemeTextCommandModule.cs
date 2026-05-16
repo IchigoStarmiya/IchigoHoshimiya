@@ -11,9 +11,9 @@ public class MultiThemeTextCommandModule(IAnimethemeService animethemeService)
 {
     [Command("themes")]
     [UsedImplicitly]
-    public MessageProperties Themes([CommandParameter(Remainder = true)] string query)
+    public async Task<MessageProperties> Themes([CommandParameter(Remainder = true)] string query)
     {
-        EmbedProperties embed = animethemeService.GetAllAnimethemes(query, null);
+        EmbedProperties embed = await animethemeService.GetAllAnimethemes(query, null);
 
         MessageProperties props = new MessageProperties()
            .WithEmbeds([embed]);
