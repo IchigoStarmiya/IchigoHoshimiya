@@ -1,13 +1,16 @@
 using IchigoHoshimiya.Interfaces;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Configuration;
+using NetCord;
 using NetCord.Services.ApplicationCommands;
 
 namespace IchigoHoshimiya.Modules.SlashCommands;
 
-public class HetznerSlashCommandModule(IHetznerService hetznerService, IConfiguration configuration)
+public class HetznerSlashCommandModule(IHetznerService hetznerService)
     : ApplicationCommandModule<ApplicationCommandContext>
 {
+    private const ulong AllowedGuildId = 1501672515058012250UL;
+    private const ulong AllowedRoleId = 1502208618727211059UL;
+
     [SlashCommand("startvps", "Power on the configured Hetzner VPS.")]
     [UsedImplicitly]
     public Task<string> StartVps() => RunAsync(start: true);
@@ -18,8 +21,9 @@ public class HetznerSlashCommandModule(IHetznerService hetznerService, IConfigur
 
     private async Task<string> RunAsync(bool start)
     {
-        var ownerUserId = configuration.GetValue<ulong>("Discord:OwnerUserId");
-        if (Context.User.Id != ownerUserId)
+        if (Context.Interaction.GuildId != AllowedGuildId
+            || Context.User is not GuildUser member
+            || !member.RoleIds.Contains(AllowedRoleId))
             return "You do not have permission to use this command.";
 
         if (!hetznerService.IsConfigured)
