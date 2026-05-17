@@ -41,16 +41,30 @@ public sealed class AnimethemeCache(
 
             var entries = await dbContext.AnimeThemeEntries
                                          .AsNoTracking()
-                                         .AsSplitQuery()
                                          .Include(e => e.Theme)
                                          .ThenInclude(t => t.Song)
                                          .Include(e => e.Theme)
                                          .ThenInclude(t => t.Anime)
-                                         .Include(e => e.AnimeThemeEntryVideos)
-                                         .ThenInclude(v => v.Video)
                                          .Where(e => e.Theme.Song != null)
                                          .Where(e => e.AnimeThemeEntryVideos.Any())
                                          .ToListAsync(cancellationToken);
+
+            var entryIds = entries.Select(e => e.EntryId).ToList();
+            var entriesById = entries.ToDictionary(e => e.EntryId);
+
+            var entryVideos = await dbContext.AnimeThemeEntryVideos
+                                             .AsNoTracking()
+                                             .Include(ev => ev.Video)
+                                             .Where(ev => entryIds.Contains(ev.EntryId))
+                                             .ToListAsync(cancellationToken);
+
+            foreach (var entryVideo in entryVideos)
+            {
+                if (entriesById.TryGetValue(entryVideo.EntryId, out var entry))
+                {
+                    entry.AnimeThemeEntryVideos.Add(entryVideo);
+                }
+            }
 
             var animeIds = entries.Select(e => e.Theme.AnimeId).Distinct().ToList();
 
