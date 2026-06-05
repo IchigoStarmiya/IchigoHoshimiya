@@ -15,24 +15,25 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="FuzzySharp" Version="2.0.2"/>
+        <PackageReference Include="FuzzySharp" Version="2.0.2" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3"/>
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3"/>
-        <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.1"/>
-        <PackageReference Include="MySqlConnector" Version="2.5.0"/>
-        <PackageReference Include="NetCord" Version="1.0.0-alpha.468"/>
-        <PackageReference Include="NetCord.Hosting" Version="1.0.0-alpha.468"/>
-        <PackageReference Include="NetCord.Hosting.Services" Version="1.0.0-alpha.468"/>
-        <PackageReference Include="NetCord.Services" Version="1.0.0-alpha.468"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
+        <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.1" />
+        <PackageReference Include="MySqlConnector" Version="2.5.0" />
+        <PackageReference Include="NetCord" Version="1.0.0-alpha.468" />
+        <PackageReference Include="NetCord.Hosting" Version="1.0.0-alpha.468" />
+        <PackageReference Include="NetCord.Hosting.Services" Version="1.0.0-alpha.468" />
+        <PackageReference Include="NetCord.Services" Version="1.0.0-alpha.468" />
         <PackageReference Include="Sentry" Version="6.1.0" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="6.1.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
 
     <ItemGroup>
@@ -42,10 +43,13 @@
         <None Update="Queries\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Icons\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Migrations\"/>
+        <Folder Include="Migrations\" />
         <Folder Include="Native\" />
     </ItemGroup>
 

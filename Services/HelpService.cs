@@ -28,7 +28,7 @@ public class HelpService(IConfiguration configuration) : IHelpService
     };
 
     // Text command methods to exclude from the "text only" field (owner-use commands).
-    private static readonly HashSet<string> ExcludedTextModules = ["OwnerCommandModule"];
+    private static readonly HashSet<string> ExcludedTextModules = ["OwnerCommandModule", "HungerGamesTextCommandModule"];
 
     // Descriptions for text-only commands that have no slash equivalent.
     private static readonly Dictionary<string, string> TextOnlyDescriptions = new()

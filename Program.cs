@@ -86,6 +86,7 @@ builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddHttpClient<IAnilistService, AnilistService>();
 builder.Services.AddSingleton<IHelpService, HelpService>();
+builder.Services.AddSingleton<IHungerGamesService, HungerGamesService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {
