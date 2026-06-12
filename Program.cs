@@ -41,14 +41,10 @@ builder.Logging.AddSentry(options =>
 builder.Services.Configure<AnimeThemesUpdaterSettings>(
     builder.Configuration.GetSection("AnimeThemesUpdater"));
 
-builder.Services.Configure<HetznerSettings>(
-    builder.Configuration.GetSection("Hetzner"));
+builder.Services.Configure<GameServerSettings>(
+    builder.Configuration.GetSection("GameServers"));
 
-builder.Services.AddHttpClient<IHetznerService, HetznerService>(client =>
-{
-    client.BaseAddress = new Uri("https://api.hetzner.cloud");
-    client.Timeout = TimeSpan.FromSeconds(15);
-});
+builder.Services.AddSingleton<IGameServerService, GameServerService>();
 
 if (!builder.Environment.IsDevelopment())
 {

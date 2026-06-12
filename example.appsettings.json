@@ -21,8 +21,13 @@
   "TouchingGrassGuild": 514203145333899276,
   "RefugeeBot": true,
   "Dsn": "",
-  "Hetzner": {
-    "ApiToken": "",
-    "ServerId": 0
+  "GameServers": {
+    "Host": "",
+    "Port": 22,
+    "Username": "root",
+    "Password": "",
+    "PrivateKeyPath": "",
+    "CobbleverseUnit": "cobbleverse.service",
+    "PalworldUnit": "palworld.service"
   }
 }
