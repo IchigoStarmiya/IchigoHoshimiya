@@ -46,11 +46,15 @@ public class GameServerService(
             UseShellExecute = false
         };
         // Let the host's own ssh setup (keys, agent, known_hosts) handle auth.
-        // BatchMode fails fast instead of hanging on a password prompt.
+        // BatchMode fails fast instead of hanging on a password prompt; accept-new
+        // trusts the server on first connect rather than failing when the bot
+        // process runs under a user whose known_hosts doesn't have it yet.
         startInfo.ArgumentList.Add("-p");
         startInfo.ArgumentList.Add(_settings.Port.ToString());
         startInfo.ArgumentList.Add("-o");
         startInfo.ArgumentList.Add("BatchMode=yes");
+        startInfo.ArgumentList.Add("-o");
+        startInfo.ArgumentList.Add("StrictHostKeyChecking=accept-new");
         startInfo.ArgumentList.Add($"{_settings.Username}@{_settings.Host}");
         startInfo.ArgumentList.Add(remoteCommand);
 
