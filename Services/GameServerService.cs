@@ -1,7 +1,7 @@
+using System.Diagnostics;
 using IchigoHoshimiya.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Renci.SshNet;
 
 namespace IchigoHoshimiya.Services;
 
@@ -10,8 +10,6 @@ public class GameServerSettings
     public string Host { get; set; } = string.Empty;
     public int Port { get; set; } = 22;
     public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string PrivateKeyPath { get; set; } = string.Empty;
     public string CobbleverseUnit { get; set; } = string.Empty;
     public string PalworldUnit { get; set; } = string.Empty;
 }
@@ -27,9 +25,7 @@ public class GameServerService(
         !string.IsNullOrWhiteSpace(_settings.Host)
         && !string.IsNullOrWhiteSpace(_settings.Username)
         && !string.IsNullOrWhiteSpace(_settings.CobbleverseUnit)
-        && !string.IsNullOrWhiteSpace(_settings.PalworldUnit)
-        && (!string.IsNullOrWhiteSpace(_settings.Password)
-            || ResolvePrivateKeyPath() is not null);
+        && !string.IsNullOrWhiteSpace(_settings.PalworldUnit);
 
     public Task StartCobbleverseAsync(CancellationToken cancellationToken = default) =>
         SwitchAsync(_settings.CobbleverseUnit, _settings.PalworldUnit, cancellationToken);
@@ -39,60 +35,46 @@ public class GameServerService(
 
     private async Task SwitchAsync(string startUnit, string stopUnit, CancellationToken cancellationToken)
     {
-        using var client = new SshClient(CreateConnectionInfo());
-        await client.ConnectAsync(cancellationToken);
-        try
+        // Unit names come from trusted configuration, so they are safe to interpolate.
+        var remoteCommand = $"sudo systemctl stop {stopUnit} && sudo systemctl start {startUnit}";
+
+        var startInfo = new ProcessStartInfo
         {
-            // Unit names come from trusted configuration, so they are safe to interpolate.
-            var script = $"sudo systemctl stop {stopUnit} && sudo systemctl start {startUnit}";
-            using var command = client.CreateCommand(script);
-            await command.ExecuteAsync(cancellationToken);
+            FileName = "ssh",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        // Let the host's own ssh setup (keys, agent, known_hosts) handle auth.
+        // BatchMode fails fast instead of hanging on a password prompt.
+        startInfo.ArgumentList.Add("-p");
+        startInfo.ArgumentList.Add(_settings.Port.ToString());
+        startInfo.ArgumentList.Add("-o");
+        startInfo.ArgumentList.Add("BatchMode=yes");
+        startInfo.ArgumentList.Add($"{_settings.Username}@{_settings.Host}");
+        startInfo.ArgumentList.Add(remoteCommand);
 
-            if (command.ExitStatus is not 0)
-            {
-                logger.LogError(
-                    "systemctl switch failed (start={Start}, stop={Stop}): exit={Exit} {Error}",
-                    startUnit, stopUnit, command.ExitStatus, command.Error);
-                throw new InvalidOperationException(
-                    $"systemctl exited with {command.ExitStatus}: {command.Error}".Trim());
-            }
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
 
-            logger.LogInformation(
-                "systemctl switch succeeded (start={Start}, stop={Stop}): {Output}",
-                startUnit, stopUnit, command.Result);
-        }
-        finally
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
+
+        var stdout = (await stdoutTask).Trim();
+        var stderr = (await stderrTask).Trim();
+
+        if (process.ExitCode is not 0)
         {
-            client.Disconnect();
-        }
-    }
-
-    private ConnectionInfo CreateConnectionInfo()
-    {
-        var keyPath = ResolvePrivateKeyPath();
-        AuthenticationMethod auth = keyPath is not null
-            ? new PrivateKeyAuthenticationMethod(_settings.Username, new PrivateKeyFile(keyPath))
-            : new PasswordAuthenticationMethod(_settings.Username, _settings.Password);
-
-        return new ConnectionInfo(_settings.Host, _settings.Port, _settings.Username, auth);
-    }
-
-    // Returns the configured key path, or the conventional ~/.ssh key when none is set, or null if neither exists.
-    private string? ResolvePrivateKeyPath()
-    {
-        if (!string.IsNullOrWhiteSpace(_settings.PrivateKeyPath))
-        {
-            return _settings.PrivateKeyPath;
+            logger.LogError(
+                "ssh systemctl switch failed (start={Start}, stop={Stop}): exit={Exit} {Error}",
+                startUnit, stopUnit, process.ExitCode, stderr);
+            throw new InvalidOperationException(
+                $"ssh exited with {process.ExitCode}: {stderr}".Trim());
         }
 
-        var sshDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
-
-        return DefaultKeyNames
-            .Select(name => Path.Combine(sshDir, name))
-            .FirstOrDefault(File.Exists);
+        logger.LogInformation(
+            "ssh systemctl switch succeeded (start={Start}, stop={Stop}): {Output}",
+            startUnit, stopUnit, stdout);
     }
-
-    private static readonly string[] DefaultKeyNames =
-        ["id_ed25519", "id_ecdsa", "id_rsa"];
 }
