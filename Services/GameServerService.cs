@@ -29,7 +29,7 @@ public class GameServerService(
         && !string.IsNullOrWhiteSpace(_settings.CobbleverseUnit)
         && !string.IsNullOrWhiteSpace(_settings.PalworldUnit)
         && (!string.IsNullOrWhiteSpace(_settings.Password)
-            || !string.IsNullOrWhiteSpace(_settings.PrivateKeyPath));
+            || ResolvePrivateKeyPath() is not null);
 
     public Task StartCobbleverseAsync(CancellationToken cancellationToken = default) =>
         SwitchAsync(_settings.CobbleverseUnit, _settings.PalworldUnit, cancellationToken);
@@ -69,10 +69,30 @@ public class GameServerService(
 
     private ConnectionInfo CreateConnectionInfo()
     {
-        AuthenticationMethod auth = !string.IsNullOrWhiteSpace(_settings.PrivateKeyPath)
-            ? new PrivateKeyAuthenticationMethod(_settings.Username, new PrivateKeyFile(_settings.PrivateKeyPath))
+        var keyPath = ResolvePrivateKeyPath();
+        AuthenticationMethod auth = keyPath is not null
+            ? new PrivateKeyAuthenticationMethod(_settings.Username, new PrivateKeyFile(keyPath))
             : new PasswordAuthenticationMethod(_settings.Username, _settings.Password);
 
         return new ConnectionInfo(_settings.Host, _settings.Port, _settings.Username, auth);
     }
+
+    // Returns the configured key path, or the conventional ~/.ssh key when none is set, or null if neither exists.
+    private string? ResolvePrivateKeyPath()
+    {
+        if (!string.IsNullOrWhiteSpace(_settings.PrivateKeyPath))
+        {
+            return _settings.PrivateKeyPath;
+        }
+
+        var sshDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
+
+        return DefaultKeyNames
+            .Select(name => Path.Combine(sshDir, name))
+            .FirstOrDefault(File.Exists);
+    }
+
+    private static readonly string[] DefaultKeyNames =
+        ["id_ed25519", "id_ecdsa", "id_rsa"];
 }
