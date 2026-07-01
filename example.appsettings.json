@@ -15,6 +15,10 @@
     "Green": 239,
     "Blue": 120
   },
+  "MessageLogger": {
+    "SourceChannelIds": [],
+    "LogChannelId": 0
+  },
   "JackettUrl": "http://localhost:9117/api/v2.0/indexers/all/results?apikey=<your-api-key>&Tracker[]=nyaasi",
   "AirtimeChangeChannel": 1404057572327165952,
   "TouchingGrassRole": 1081781586929922169,
