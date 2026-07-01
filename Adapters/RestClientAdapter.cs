@@ -108,4 +108,16 @@ public class RestClientAdapter(RestClient restClient) : IClient
             Attachments = [attachment]
         });
     }
+
+    public async Task<string?> GetGuildNameAsync(ulong guildId)
+    {
+        var guild = await restClient.GetGuildAsync(guildId);
+        return guild.Name;
+    }
+
+    public async Task<string?> GetChannelNameAsync(ulong channelId)
+    {
+        var channel = await restClient.GetChannelAsync(channelId);
+        return (channel as INamedChannel)?.Name;
+    }
 }

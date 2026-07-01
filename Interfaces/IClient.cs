@@ -22,6 +22,10 @@ public interface IClient
     Task<IEnumerable<TextGuildChannel>> GetChannelsInCategoriesAsync(ulong guildId, IEnumerable<ulong> categoryIds);
     
     Task<IEnumerable<RestMessage>> GetMessagesAfterIdAsync(ulong channelId, ulong afterMessageId);
-    
+
     Task SendFileAsync(ulong channelId, Stream fileStream, string fileName, string messageContent);
+
+    Task<string?> GetGuildNameAsync(ulong guildId);
+
+    Task<string?> GetChannelNameAsync(ulong channelId);
 }

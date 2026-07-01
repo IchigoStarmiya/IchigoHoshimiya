@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using IchigoHoshimiya.Helpers;
 using IchigoHoshimiya.Interfaces;
 using JetBrains.Annotations;
@@ -20,6 +21,9 @@ public class MessageLoggerHandler(IClient client, IOptions<MessageLoggerSettings
     : IMessageCreateGatewayHandler
 {
     private static readonly HttpClient SHttpClient = new();
+
+    private static readonly ConcurrentDictionary<ulong, string> SGuildNameCache = new();
+    private static readonly ConcurrentDictionary<ulong, string> SChannelNameCache = new();
 
     private readonly MessageLoggerSettings _settings = options.Value;
 
@@ -44,9 +48,11 @@ public class MessageLoggerHandler(IClient client, IOptions<MessageLoggerSettings
     {
         try
         {
+            var sourceLabel = await BuildSourceLabelAsync(message);
+
             var properties = new MessageProperties
             {
-                Embeds = [BuildEmbed(message)],
+                Embeds = [BuildEmbed(message, sourceLabel)],
                 Attachments = await DownloadAttachmentsAsync(message)
             };
 
@@ -58,7 +64,7 @@ public class MessageLoggerHandler(IClient client, IOptions<MessageLoggerSettings
         }
     }
 
-    private static EmbedProperties BuildEmbed(Message message)
+    private static EmbedProperties BuildEmbed(Message message, string sourceLabel)
     {
         var description = string.IsNullOrWhiteSpace(message.Content)
             ? "*(no text content)*"
@@ -71,11 +77,47 @@ public class MessageLoggerHandler(IClient client, IOptions<MessageLoggerSettings
             Name = $"{message.Author.Username} ({message.Author.Id})",
             IconUrl = message.Author.GetAvatarUrl()?.ToString()
         };
-        embed.Fields = [new EmbedFieldProperties { Name = "Source", Value = $"<#{message.ChannelId}>" }];
+        embed.Fields = [new EmbedFieldProperties { Name = "Source", Value = sourceLabel }];
         embed.Footer = new EmbedFooterProperties { Text = $"Message ID: {message.Id}" };
         embed.Timestamp = message.CreatedAt;
 
         return embed;
+    }
+
+    private async Task<string> BuildSourceLabelAsync(Message message)
+    {
+        var channelName = await GetCachedNameAsync(
+            SChannelNameCache, message.ChannelId, () => client.GetChannelNameAsync(message.ChannelId));
+
+        var channelLabel = channelName is null ? $"#{message.ChannelId}" : $"#{channelName}";
+
+        if (message.GuildId is not { } guildId)
+        {
+            return channelLabel;
+        }
+
+        var guildName = await GetCachedNameAsync(
+            SGuildNameCache, guildId, () => client.GetGuildNameAsync(guildId));
+
+        return guildName is null ? channelLabel : $"{guildName} / {channelLabel}";
+    }
+
+    private static async Task<string?> GetCachedNameAsync(
+        ConcurrentDictionary<ulong, string> cache, ulong id, Func<Task<string?>> fetch)
+    {
+        if (cache.TryGetValue(id, out var cached))
+        {
+            return cached;
+        }
+
+        var name = await fetch();
+
+        if (name is not null)
+        {
+            cache[id] = name;
+        }
+
+        return name;
     }
 
     private static async Task<List<AttachmentProperties>> DownloadAttachmentsAsync(Message message)
