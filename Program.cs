@@ -2,6 +2,7 @@ using IchigoHoshimiya;
 using IchigoHoshimiya.Adapters;
 using IchigoHoshimiya.BackgroundServices;
 using IchigoHoshimiya.Context;
+using IchigoHoshimiya.Handlers;
 using IchigoHoshimiya.Helpers;
 using IchigoHoshimiya.Interfaces;
 using IchigoHoshimiya.Services;
@@ -43,6 +44,9 @@ builder.Services.Configure<AnimeThemesUpdaterSettings>(
 
 builder.Services.Configure<GameServerSettings>(
     builder.Configuration.GetSection("GameServers"));
+
+builder.Services.Configure<MessageLoggerSettings>(
+    builder.Configuration.GetSection("MessageLogger"));
 
 builder.Services.AddSingleton<IGameServerService, GameServerService>();
 
