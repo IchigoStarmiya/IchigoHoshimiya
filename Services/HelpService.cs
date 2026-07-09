@@ -22,7 +22,6 @@ public class HelpService(IConfiguration configuration) : IHelpService
         { "PingSlashCommandModule",            "Utility"       },
         { "ChooseSlashCommand",                "Utility"       },
         { "ThreadSlashCommandModule",          "Utility"       },
-        { "StarmiyaSlashCommandModule",        "Utility"       },
         { "VodSlashCommandModule",             "Utility"       },
         { "TeamspeakSlashCommandModule",       "Utility"       },
     };
