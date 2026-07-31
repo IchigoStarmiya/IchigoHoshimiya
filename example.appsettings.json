@@ -25,6 +25,15 @@
   "TouchingGrassGuild": 514203145333899276,
   "RefugeeBot": true,
   "Dsn": "",
+  "Wwm": {
+    "BaseUrl": "https://wwm.ratz-gg.net",
+    "SessionCookie": "<your-wwm_session-cookie>",
+    "PollIntervalMs": 5000,
+    "TimeoutSeconds": 180,
+    "CheckIntervalMinutes": 5,
+    "RequestDelaySeconds": 15,
+    "AlertChannelId": 0
+  },
   "GameServers": {
     "Host": "",
     "Port": 22,
