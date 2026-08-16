@@ -205,7 +205,7 @@ public class WwmLookupService(
 
         if (!string.IsNullOrWhiteSpace(Settings.SessionCookie))
         {
-            request.Headers.Add("Cookie", $"wwm_session={Settings.SessionCookie}");
+            request.Headers.Add("Cookie", $"rg_sess={Settings.SessionCookie}");
         }
 
         if (method == HttpMethod.Post)

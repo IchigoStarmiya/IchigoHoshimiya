@@ -27,7 +27,7 @@
   "Dsn": "",
   "Wwm": {
     "BaseUrl": "https://wwm.ratz-gg.net",
-    "SessionCookie": "<your-wwm_session-cookie>",
+    "SessionCookie": "<your-rg_sess-cookie>",
     "PollIntervalMs": 5000,
     "TimeoutSeconds": 180,
     "CheckIntervalMinutes": 5,
