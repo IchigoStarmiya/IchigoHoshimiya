@@ -1,4 +1,4 @@
-using IchigoHoshimiya;
+﻿using IchigoHoshimiya;
 using IchigoHoshimiya.Adapters;
 using IchigoHoshimiya.BackgroundServices;
 using IchigoHoshimiya.Context;
@@ -48,9 +48,6 @@ builder.Services.Configure<GameServerSettings>(
 builder.Services.Configure<MessageLoggerSettings>(
     builder.Configuration.GetSection("MessageLogger"));
 
-builder.Services.Configure<WwmSettings>(
-    builder.Configuration.GetSection("Wwm"));
-
 builder.Services.AddSingleton<IGameServerService, GameServerService>();
 
 if (!builder.Environment.IsDevelopment())
@@ -65,8 +62,6 @@ if (!builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<GrassToucherReleaserService>();
     builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
 
-    builder.Services.AddHostedService<WwmSnapshotTrackerService>();
-
     // builder.Services.AddHostedService<DanseMacabreBackgroundService>();
 }
 
@@ -77,9 +72,6 @@ builder.Services.AddDbContext<AnimethemesDbContext>(options =>
     options.UseMySQL(connectionString!));
 
 builder.Services.AddDbContext<IchigoContext>(options =>
-    options.UseMySQL(connectionString!));
-
-builder.Services.AddDbContext<WwmDbContext>(options =>
     options.UseMySQL(connectionString!));
 
 
@@ -93,7 +85,6 @@ builder.Services.AddScoped<IRssService, RssService>();
 builder.Services.AddScoped<IChooseService, ChooseService>();
 builder.Services.AddScoped<ITouchGrassService, TouchGrassService>();
 builder.Services.AddHttpClient<IAnilistService, AnilistService>();
-builder.Services.AddHttpClient<IWwmLookupService, WwmLookupService>();
 builder.Services.AddSingleton<IHelpService, HelpService>();
 builder.Services.AddSingleton<IHungerGamesService, HungerGamesService>();
 
