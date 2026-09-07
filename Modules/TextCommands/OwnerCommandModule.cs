@@ -1,3 +1,4 @@
+using System.Text;
 using IchigoHoshimiya.Helpers;
 using IchigoHoshimiya.Interfaces;
 using JetBrains.Annotations;
@@ -37,6 +38,56 @@ public class OwnerCommandModule(IClient ichigoClient, IConfiguration configurati
             Embeds = [EmbedHelper.Build(null, text)]
         };
         await ichigoClient.EditEmbedMessageAsync(ulong.Parse(channelId), ulong.Parse(messageId), props);
+    }
+
+    [Command("servers")]
+    [UsedImplicitly]
+    public async Task ListServersCommand()
+    {
+        var ownerUserId = configuration.GetValue<ulong>("Discord:OwnerUserId");
+        if (Context.Message.Author.Id != ownerUserId)
+            return;
+
+        var guilds = await ichigoClient.GetGuildsAsync();
+        if (guilds.Count == 0)
+        {
+            await ichigoClient.SendMessageAsync(Context.Message.ChannelId, "I'm not in any servers.");
+            return;
+        }
+
+        var lines = guilds
+            .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g => $"**{g.Name}** — `{g.Id}`");
+
+        foreach (var page in Paginate(lines))
+        {
+            await ichigoClient.SendEmbedMessageAsync(
+                Context.Message.ChannelId,
+                new MessageProperties { Embeds = [EmbedHelper.Build($"Servers ({guilds.Count})", page)] });
+        }
+    }
+
+    private static IEnumerable<string> Paginate(IEnumerable<string> lines)
+    {
+        const int maxDescriptionLength = 4000;
+        var page = new StringBuilder();
+
+        foreach (var line in lines)
+        {
+            if (page.Length > 0 && page.Length + line.Length + 1 > maxDescriptionLength)
+            {
+                yield return page.ToString();
+                page.Clear();
+            }
+
+            if (page.Length > 0)
+                page.Append('\n');
+
+            page.Append(line);
+        }
+
+        if (page.Length > 0)
+            yield return page.ToString();
     }
 
     [Command("leaveserver")]

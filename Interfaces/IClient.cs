@@ -25,6 +25,8 @@ public interface IClient
 
     Task SendFileAsync(ulong channelId, Stream fileStream, string fileName, string messageContent);
 
+    Task<IReadOnlyList<RestGuild>> GetGuildsAsync();
+
     Task<string?> GetGuildNameAsync(ulong guildId);
 
     Task<string?> GetChannelNameAsync(ulong channelId);

@@ -109,6 +109,18 @@ public class RestClientAdapter(RestClient restClient) : IClient
         });
     }
 
+    public async Task<IReadOnlyList<RestGuild>> GetGuildsAsync()
+    {
+        var guilds = new List<RestGuild>();
+
+        await foreach (var guild in restClient.GetCurrentUserGuildsAsync())
+        {
+            guilds.Add(guild);
+        }
+
+        return guilds;
+    }
+
     public async Task<string?> GetGuildNameAsync(ulong guildId)
     {
         var guild = await restClient.GetGuildAsync(guildId);
