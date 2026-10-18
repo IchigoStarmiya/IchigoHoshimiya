@@ -69,6 +69,67 @@ namespace IchigoHoshimiya.Migrations
                     b.ToTable("airing_episode");
                 });
 
+            modelBuilder.Entity("IchigoHoshimiya.Entities.General.EnergyCharacter", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Energy")
+                        .HasColumnType("int")
+                        .HasColumnName("energy");
+
+                    b.Property<bool>("EnergyAlertSent")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("energy_alert_sent");
+
+                    b.Property<DateTime>("EnergyUpdatedAtUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("energy_updated_at_utc");
+
+                    b.Property<int>("ExtraEnergy")
+                        .HasColumnType("int")
+                        .HasColumnName("extra_energy");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_main");
+
+                    b.Property<int?>("ItemLevel")
+                        .HasColumnType("int")
+                        .HasColumnName("item_level");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("NightmareTickets")
+                        .HasColumnType("int")
+                        .HasColumnName("nightmare_tickets");
+
+                    b.Property<bool>("TicketAlertSent")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("ticket_alert_sent");
+
+                    b.Property<DateTime>("TicketsUpdatedAtUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("tickets_updated_at_utc");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("energy_character");
+                });
+
             modelBuilder.Entity("IchigoHoshimiya.Entities.General.GrassToucher", b =>
                 {
                     b.Property<long>("Id")
