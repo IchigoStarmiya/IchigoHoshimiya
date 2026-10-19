@@ -130,8 +130,8 @@ public class EnergyTrackerCalculator : IEnergyTrackerCalculator
 
     public void AcknowledgeAlerts(EnergyCharacter character)
     {
-        character.EnergyAlertSent = GetEnergyLevel(character) == EnergyTrackerLevel.Critical;
-        character.TicketAlertSent = GetNightmareTicketLevel(character) == EnergyTrackerLevel.Critical;
+        character.EnergyAlertLevel = GetEnergyLevel(character);
+        character.TicketAlertLevel = GetNightmareTicketLevel(character);
     }
 
     private int CountMarksBetween(TimeSpan[] dailyMarks, DateTime fromUtc, DateTime toUtc)

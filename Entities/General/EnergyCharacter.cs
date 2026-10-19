@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using IchigoHoshimiya.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace IchigoHoshimiya.Entities.General;
@@ -29,7 +30,8 @@ public class EnergyCharacter
 
     [Column("tickets_updated_at_utc")] public DateTime TicketsUpdatedAtUtc { get; set; }
 
-    [Column("energy_alert_sent")] public bool EnergyAlertSent { get; set; }
+    // Highest level already alerted on, so each level pings once until the value drops back below it
+    [Column("energy_alert_level")] public EnergyTrackerLevel EnergyAlertLevel { get; set; }
 
-    [Column("ticket_alert_sent")] public bool TicketAlertSent { get; set; }
+    [Column("ticket_alert_level")] public EnergyTrackerLevel TicketAlertLevel { get; set; }
 }

@@ -56,11 +56,11 @@ public class EnergyRechargeService(
         {
             calculator.ApplyRecharges(character, now);
 
-            var energyAlert = !character.EnergyAlertSent
-                              && calculator.GetEnergyLevel(character) == EnergyTrackerLevel.Critical;
+            var energyLevel = calculator.GetEnergyLevel(character);
+            var ticketLevel = calculator.GetNightmareTicketLevel(character);
 
-            var ticketAlert = !character.TicketAlertSent
-                              && calculator.GetNightmareTicketLevel(character) == EnergyTrackerLevel.Critical;
+            var energyAlert = energyLevel > character.EnergyAlertLevel;
+            var ticketAlert = ticketLevel > character.TicketAlertLevel;
 
             calculator.AcknowledgeAlerts(character);
 
@@ -77,12 +77,12 @@ public class EnergyRechargeService(
 
             if (energyAlert)
             {
-                message.Append('\n').Append(DescribeEnergyAlert(character, now));
+                message.Append('\n').Append(DescribeEnergyAlert(character, energyLevel, now));
             }
 
             if (ticketAlert)
             {
-                message.Append('\n').Append(DescribeTicketAlert(character, now));
+                message.Append('\n').Append(DescribeTicketAlert(character, ticketLevel, now));
             }
         }
 
@@ -106,7 +106,7 @@ public class EnergyRechargeService(
         }
     }
 
-    private string DescribeEnergyAlert(EnergyCharacter character, DateTime now)
+    private string DescribeEnergyAlert(EnergyCharacter character, EnergyTrackerLevel level, DateTime now)
     {
         var fullAt = calculator.GetEnergyFullAtUtc(character, now);
 
@@ -114,14 +114,24 @@ public class EnergyRechargeService(
             ? $"full <t:{new DateTimeOffset(at).ToUnixTimeSeconds()}:R>"
             : "already full, recharges are being wasted";
 
-        return $"⚡ **{character.Name}** is at {character.Energy}/{_settings.MaxEnergy} energy ({when}).";
+        return $"{Indicator(level)} ⚡ **{character.Name}** is at {character.Energy}/{_settings.MaxEnergy} " +
+               $"energy ({when}).";
     }
 
-    private string DescribeTicketAlert(EnergyCharacter character, DateTime now)
+    private string DescribeTicketAlert(EnergyCharacter character, EnergyTrackerLevel level, DateTime now)
     {
         var resetAt = new DateTimeOffset(calculator.GetNextNightmareResetUtc(now)).ToUnixTimeSeconds();
 
-        return $"🎟️ **{character.Name}** has {character.NightmareTickets}/{_settings.MaxNightmareTickets} " +
-               $"nightmare tickets, the reset <t:{resetAt}:R> will waste some.";
+        var waste = level == EnergyTrackerLevel.Critical
+            ? $"the reset <t:{resetAt}:R> will waste some"
+            : $"the reset after <t:{resetAt}:R> will waste some";
+
+        return $"{Indicator(level)} 🎟️ **{character.Name}** has {character.NightmareTickets}/" +
+               $"{_settings.MaxNightmareTickets} nightmare tickets, {waste}.";
+    }
+
+    private static string Indicator(EnergyTrackerLevel level)
+    {
+        return level == EnergyTrackerLevel.Critical ? "🔴" : "🟡";
     }
 }

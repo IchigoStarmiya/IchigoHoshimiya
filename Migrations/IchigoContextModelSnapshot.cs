@@ -80,9 +80,9 @@ namespace IchigoHoshimiya.Migrations
                         .HasColumnType("int")
                         .HasColumnName("energy");
 
-                    b.Property<bool>("EnergyAlertSent")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("energy_alert_sent");
+                    b.Property<int>("EnergyAlertLevel")
+                        .HasColumnType("int")
+                        .HasColumnName("energy_alert_level");
 
                     b.Property<DateTime>("EnergyUpdatedAtUtc")
                         .HasColumnType("datetime(6)")
@@ -110,9 +110,9 @@ namespace IchigoHoshimiya.Migrations
                         .HasColumnType("int")
                         .HasColumnName("nightmare_tickets");
 
-                    b.Property<bool>("TicketAlertSent")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("ticket_alert_sent");
+                    b.Property<int>("TicketAlertLevel")
+                        .HasColumnType("int")
+                        .HasColumnName("ticket_alert_level");
 
                     b.Property<DateTime>("TicketsUpdatedAtUtc")
                         .HasColumnType("datetime(6)")
