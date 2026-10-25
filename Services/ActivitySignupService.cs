@@ -1,8 +1,10 @@
 using IchigoHoshimiya.Context;
 using IchigoHoshimiya.Entities.General;
+using IchigoHoshimiya.Helpers;
 using IchigoHoshimiya.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NetCord.Rest;
 
 namespace IchigoHoshimiya.Services;
@@ -12,9 +14,12 @@ public class ActivitySignupService(
     IActivitySignupSchedule schedule,
     IActivitySignupMessageBuilder messageBuilder,
     IClient client,
+    IOptions<ActivitySignupSettings> options,
     ILogger<ActivitySignupService> logger)
     : IActivitySignupService
 {
+    private readonly ulong _memberRoleId = options.Value.MemberRoleId;
+
     public async Task PostDueSignupsAsync(ulong channelId, DateTime nowUtc)
     {
         foreach (var slot in schedule.GetOpenSlots(nowUtc))
@@ -148,7 +153,7 @@ public class ActivitySignupService(
 
         try
         {
-            var message = await client.SendEmbedMessageAsync(signup.ChannelId, BuildMessage(signup));
+            var message = await client.SendEmbedMessageAsync(signup.ChannelId, WithMemberPing(BuildMessage(signup), signup));
 
             signup.MessageId = message.Id;
             await context.SaveChangesAsync();
@@ -163,6 +168,25 @@ public class ActivitySignupService(
 
             throw;
         }
+    }
+
+    // Only the initial post pings, test signups never do
+    private MessageProperties WithMemberPing(MessageProperties message, ActivitySignup signup)
+    {
+        if (signup.IsTest || _memberRoleId == 0)
+        {
+            return message;
+        }
+
+        message.Content = $"<@&{_memberRoleId}>";
+        message.AllowedMentions = new AllowedMentionsProperties
+        {
+            Everyone = false,
+            AllowedRoles = [_memberRoleId],
+            AllowedUsers = []
+        };
+
+        return message;
     }
 
     private MessageProperties BuildMessage(ActivitySignup signup)

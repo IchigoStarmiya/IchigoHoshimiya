@@ -41,6 +41,7 @@
   },
   "ActivitySignup": {
     "ChannelId": 0,
+    "MemberRoleId": 0,
     "TimeZone": "Europe/Zurich"
   },
   "GameServers": {
