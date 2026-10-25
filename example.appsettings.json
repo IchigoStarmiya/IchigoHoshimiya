@@ -39,6 +39,10 @@
     "MaxNightmareTickets": 14,
     "NightmareTicketResetHour": 9
   },
+  "ActivitySignup": {
+    "ChannelId": 0,
+    "TimeZone": "Europe/Zurich"
+  },
   "GameServers": {
     "Host": "",
     "Port": 22,

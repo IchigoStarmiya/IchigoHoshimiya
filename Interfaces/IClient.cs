@@ -7,7 +7,7 @@ public interface IClient
 {
     Task SendMessageAsync(ulong channelId, string content);
     
-    Task SendEmbedMessageAsync(ulong channelId, MessageProperties messageProperties);
+    Task<RestMessage> SendEmbedMessageAsync(ulong channelId, MessageProperties messageProperties);
     
     Task EditEmbedMessageAsync(ulong channelId, ulong messageId, MessageProperties messageProperties);
     

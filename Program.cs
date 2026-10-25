@@ -51,6 +51,9 @@ builder.Services.Configure<MessageLoggerSettings>(
 builder.Services.Configure<EnergyTrackerSettings>(
     builder.Configuration.GetSection("EnergyTracker"));
 
+builder.Services.Configure<ActivitySignupSettings>(
+    builder.Configuration.GetSection("ActivitySignup"));
+
 builder.Services.AddSingleton<IGameServerService, GameServerService>();
 
 if (!builder.Environment.IsDevelopment())
@@ -66,6 +69,8 @@ if (!builder.Environment.IsDevelopment())
     builder.Services.AddHostedService(sp => sp.GetRequiredService<GrassToucherReleaserService>());
 
     builder.Services.AddHostedService<EnergyRechargeService>();
+
+    builder.Services.AddHostedService<ActivitySignupPosterService>();
 
     // builder.Services.AddHostedService<DanseMacabreBackgroundService>();
 }
@@ -95,6 +100,9 @@ builder.Services.AddSingleton<IHungerGamesService, HungerGamesService>();
 builder.Services.AddSingleton<IEnergyTrackerCalculator, EnergyTrackerCalculator>();
 builder.Services.AddSingleton<IEnergyTrackerEmbedBuilder, EnergyTrackerEmbedBuilder>();
 builder.Services.AddScoped<IEnergyTrackerService, EnergyTrackerService>();
+builder.Services.AddSingleton<IActivitySignupSchedule, ActivitySignupSchedule>();
+builder.Services.AddSingleton<IActivitySignupMessageBuilder, ActivitySignupMessageBuilder>();
+builder.Services.AddScoped<IActivitySignupService, ActivitySignupService>();
 
 builder.Services.Configure<HostOptions>(o =>
 {

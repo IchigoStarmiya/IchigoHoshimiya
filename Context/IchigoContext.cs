@@ -34,6 +34,10 @@ public class IchigoContext : DbContext
 
     public virtual DbSet<EnergyCharacter> EnergyCharacters { get; set; }
 
+    public virtual DbSet<ActivitySignup> ActivitySignups { get; set; }
+
+    public virtual DbSet<ActivitySignupEntry> ActivitySignupEntries { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
           base.OnModelCreating(modelBuilder);

@@ -53,7 +53,7 @@ MySQL Database
 - `Modules/TextCommands/` — legacy prefix-based commands
 - `Modules/InteractionModules/` — button and string menu component interactions
 
-**Background services** (`BackgroundServices/`) run on timers: `AnimeThemesDbUpdateService`, `SeasonalCalendarDbUpdateService`, `RssSearcherAndPosterService` (Jackett/RSS, every 30 min), `TicketBackupService`, `GrassToucherReleaserService`, `ScrimAutoCloseService`. `DanseMacabreBackgroundService` is currently commented out.
+**Background services** (`BackgroundServices/`) run on timers: `AnimeThemesDbUpdateService`, `SeasonalCalendarDbUpdateService`, `RssSearcherAndPosterService` (Jackett/RSS, every 30 min), `TicketBackupService`, `GrassToucherReleaserService`, `ScrimAutoCloseService`, `ActivitySignupPosterService` (posts and closes the daily activity signups). `DanseMacabreBackgroundService` is currently commented out.
 
 **Adapters/** wraps NetCord's `RestClient` behind an `IClient` interface (`RestClientAdapter`) so services don't take a hard dependency on the Discord client.
 

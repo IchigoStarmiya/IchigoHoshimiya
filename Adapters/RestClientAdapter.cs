@@ -12,7 +12,7 @@ public class RestClientAdapter(RestClient restClient) : IClient
         return restClient.SendMessageAsync(channelId, content);
     }
 
-    public Task SendEmbedMessageAsync(ulong channelId, MessageProperties messageProperties)
+    public Task<RestMessage> SendEmbedMessageAsync(ulong channelId, MessageProperties messageProperties)
     {
         return restClient.SendMessageAsync(channelId, messageProperties);
     }
@@ -26,6 +26,7 @@ public class RestClientAdapter(RestClient restClient) : IClient
             {
                 options.Content = messageProperties.Content;
                 options.Embeds = messageProperties.Embeds;
+                options.Components = messageProperties.Components;
             });
     }
 

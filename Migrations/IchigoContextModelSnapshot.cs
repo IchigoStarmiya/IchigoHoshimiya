@@ -69,6 +69,91 @@ namespace IchigoHoshimiya.Migrations
                     b.ToTable("airing_episode");
                 });
 
+            modelBuilder.Entity("IchigoHoshimiya.Entities.General.ActivitySignup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<ulong>("ChannelId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("channel_id");
+
+                    b.Property<DateTime>("CloseAtUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("close_at_utc");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_open");
+
+                    b.Property<bool>("IsSiegeDay")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_siege_day");
+
+                    b.Property<bool>("IsTest")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_test");
+
+                    b.Property<ulong?>("MessageId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("message_id");
+
+                    b.Property<DateTime>("SlotEndUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("slot_end_utc");
+
+                    b.Property<DateTime>("SlotStartUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("slot_start_utc");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SlotStartUtc");
+
+                    b.HasIndex("IsOpen", "CloseAtUtc");
+
+                    b.ToTable("activity_signup");
+                });
+
+            modelBuilder.Entity("IchigoHoshimiya.Entities.General.ActivitySignupEntry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    b.Property<long>("ActivitySignupId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("activity_signup_id");
+
+                    b.Property<int>("Choice")
+                        .HasColumnType("int")
+                        .HasColumnName("choice");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivitySignupId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("activity_signup_entry");
+                });
+
             modelBuilder.Entity("IchigoHoshimiya.Entities.General.EnergyCharacter", b =>
                 {
                     b.Property<long>("Id")
@@ -375,6 +460,17 @@ namespace IchigoHoshimiya.Migrations
                     b.Navigation("Anime");
                 });
 
+            modelBuilder.Entity("IchigoHoshimiya.Entities.General.ActivitySignupEntry", b =>
+                {
+                    b.HasOne("IchigoHoshimiya.Entities.General.ActivitySignup", "ActivitySignup")
+                        .WithMany("Entries")
+                        .HasForeignKey("ActivitySignupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActivitySignup");
+                });
+
             modelBuilder.Entity("IchigoHoshimiya.Entities.General.ScrimSignupEntry", b =>
                 {
                     b.HasOne("IchigoHoshimiya.Entities.General.ScrimSignup", "ScrimSignup")
@@ -400,6 +496,11 @@ namespace IchigoHoshimiya.Migrations
             modelBuilder.Entity("IchigoHoshimiya.Entities.AniList.AiringAnime", b =>
                 {
                     b.Navigation("AiringEpisodes");
+                });
+
+            modelBuilder.Entity("IchigoHoshimiya.Entities.General.ActivitySignup", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("IchigoHoshimiya.Entities.General.ScrimSignup", b =>
